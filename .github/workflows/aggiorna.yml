@@ -50,8 +50,15 @@ jobs:
         uses: actions/deploy-pages@v5
       - name: Commit stato (mantiene attiva la pianificazione)
         run: |
+          cp stato/ultimo-aggiornamento.json /tmp/stato.json
           git config user.name "github-actions[bot]"
           git config user.email "41898237+github-actions[bot]@users.noreply.github.com"
-          git add stato/ultimo-aggiornamento.json
-          git commit -m "Quote aggiornate $(date -u +'%Y-%m-%d %H:%M') UTC" || exit 0
-          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+          for i in 1 2 3 4 5; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp /tmp/stato.json stato/ultimo-aggiornamento.json
+            git add stato/ultimo-aggiornamento.json
+            git commit -qm "Quote aggiornate $(date -u +'%Y-%m-%d %H:%M') UTC" || exit 0
+            git push -q origin HEAD:main && exit 0
+            sleep $((i * 5))
+          done
+          echo "Commit dello stato non riuscito" && exit 1

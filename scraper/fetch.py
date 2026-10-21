@@ -473,7 +473,7 @@ def main():
             traceback.print_exc(); partite, errori = [], [str(e)]
         stato.update({"durata_s": round(time.time() - t0), "errori": errori[:20], "n_errori": len(errori), "n_partite": len(partite)})
         if partite:
-            stato.update({"ok": True, "aggiornato_ok": iso(NOW)})
+            stato.update({"ok": True, "aggiornato_ok": iso(datetime.now(timezone.utc))})
             scrivi(a.out, fonte, partite, stato)
         elif not fallback(a.out, fonte, stato):
             stato.update({"ok": False})
