@@ -87,18 +87,27 @@ def tr_sel(n, home="", away=""):
 # I dati sono dentro la pagina (Astro "islands"): coupon di lega + griglie quote per ogni mercato.
 # --------------------------------------------------------------------------------------
 OC = "https://www.oddschecker.com"
+# eventId Oddschecker delle competizioni (dalle pagine /it/calcio/...; stabili tra le stagioni)
 OC_LEGHE = [
-    ("Serie A", "/it/calcio/italia/serie-a"),
-    ("Serie B", "/it/calcio/italia/serie-b"),
-    ("Champions League", "/it/calcio/coppe-e-amichevoli-per-club/champions-league"),
-    ("Europa League", "/it/calcio/coppe-e-amichevoli-per-club/europa-league"),
-    ("Conference League", "/it/calcio/coppe-e-amichevoli-per-club/conference-league"),
-    ("Premier League", "/it/calcio/inghilterra/premier-league"),
-    ("LaLiga", "/it/calcio/spagna/liga"),
-    ("Bundesliga", "/it/calcio/germania/bundesliga"),
-    ("Ligue 1", "/it/calcio/francia/ligue-1"),
-    ("Eredivisie", "/it/calcio/olanda/eredivisie"),
+    ("Serie A", 9950, "/it/calcio/italia/serie-a"),
+    ("Serie B", 9952, "/it/calcio/italia/serie-b"),
+    ("Champions League", 218309, "/it/calcio/coppe-e-amichevoli-per-club/champions-league"),
+    ("Europa League", 10545, "/it/calcio/coppe-e-amichevoli-per-club/europa-league"),
+    ("Conference League", 38925767, "/it/calcio/coppe-e-amichevoli-per-club/conference-league"),
+    ("Premier League", 2457, "/it/calcio/inghilterra/premier-league"),
+    ("LaLiga", 9945, "/it/calcio/spagna/liga"),
+    ("Bundesliga", 9935, "/it/calcio/germania/bundesliga"),
+    ("Ligue 1", 9941, "/it/calcio/francia/ligue-1"),
+    ("Eredivisie", 9943, "/it/calcio/olanda/eredivisie"),
 ]
+OC_API = OC + "/api/cx/sports-catalogue"
+OC_HDR = {"accept": "application/json", "content-type": "application/json", "repub": "IT", "country-code": "IT",
+          "referer": OC + "/it/calcio"}
+# nomi italiani dei mercati e bookmaker italiani (estratti dalle pagine di Oddschecker Italia)
+_META = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "oddschecker_meta.json")))
+OC_MERCATI = {int(k): v for k, v in _META["mercati"].items() if v.get("c") != "PLAYER_PROP"}
+OC_BK = _META["bookmaker"]
+OC_CHUNK = 12
 
 def astro_de(v):
     if isinstance(v, list) and len(v) == 2 and isinstance(v[0], int):
@@ -118,30 +127,23 @@ def script_json(page, sid):
     m = re.search(r'<script id="%s" type="application/json">(.*?)</script>' % sid, page, re.S)
     return json.loads(m.group(1)) if m else None
 
-def oc_partite_lega(s, nome, path):
-    page = get(s, OC + path).text
-    isl = script_json(page, "cx-island-data") or {}
-    subs = []
-    for v in isl.values():
-        for q in v.get("queries", []):
-            if q.get("queryKey", [None])[0] == "matches-coupon":
-                subs += (q["state"].get("data") or {}).get("subevents", [])
-    out, seen = [], set()
-    for se in subs:
-        if se.get("type") != "MATCH" or se["id"] in seen: continue
-        seen.add(se["id"])
-        dt = parse_dt(se["startTime"])
-        if not in_finestra(dt) or se.get("inRunning"): continue
-        out.append(se)
-    out.sort(key=lambda x: x["startTime"])
-    bks = (script_json(page, "cx-bookmakers-store") or {}).get("IT:IT:", {})
-    return out[:MAX_PER_LEGA], bks
-
 def oc_norm_sels(name, sels, hn, an):
     """Etichette coerenti (1/X/2, 1X/12/X2, risultati esatti casa-ospite) e ordine logico."""
     nl = name.lower()
     T = {hn: "1", an: "2", "X": "X"}
     labs = [x["n"] for x in sels]
+    if "handicap" in nl and any(x.get("l") for x in sels):
+        # linea dal punto di vista della squadra di casa, così 1 / X / 2 della stessa linea stanno insieme
+        for x in sels:
+            orig = x.get("l")
+            if not orig: continue
+            try: v = float(orig.replace("+", ""))
+            except ValueError: continue
+            hv = v if x["n"] == hn else -v
+            x["n"] = {hn: "1 · " + hn, an: "2 · " + an}.get(x["n"], x["n"]) + f" ({orig})"
+            x["l"] = f"Casa {hv:+g}".replace("+0", "0") if hv != 0 else "Casa 0"
+        sels.sort(key=lambda x: (x.get("l") or "", "1X2".find(x["n"][0]) if x["n"][0] in "1X2" else 9))
+        return
     def score_key(lab):
         m = re.match(r"(\d+)-(\d+)", lab)
         return (int(m.group(1)) + int(m.group(2)), int(m.group(1)), int(m.group(2))) if m else (99, 0, 0)
@@ -184,76 +186,80 @@ def oc_norm_sels(name, sels, hn, an):
     elif set(labs) <= {"Sì", "No"}:
         sels.sort(key=lambda x: 0 if x["n"] == "Sì" else 1)
 
-def oc_partita(s, comp, se):
-    page = get(s, OC + se["urlPath"]).text
-    props = astro_props(page, "GridGroupIsland")
-    if not props: return None   # partita senza griglia quote (es. già iniziata / sospesa): si salta
-    ca = props["componentArgs"]
-    info = {}
-    for grp, lst in (ca.get("marketGroups") or {}).items():
-        for m in lst:
-            info[m["ocMarketId"]] = (grp, m.get("marketDisplayName") or m.get("betTypeName"), m.get("marketClassification"), m.get("priority", 9999))
-    bks = (script_json(page, "cx-bookmakers-store") or {}).get("IT:IT:", {})
-    home = se["homeTeam"]["name"] if se.get("homeTeam") else se["name"].split(" v ")[0]
-    away = se["awayTeam"]["name"] if se.get("awayTeam") else se["name"].split(" v ")[-1]
+def oc_lega(s, comp, event_id, path):
+    """Usa l'API JSON pubblica che la pagina di lega di Oddschecker Italia chiama nel browser
+    (/api/cx/sports-catalogue/v1/subevent-group), a blocchi di tipi di scommessa."""
+    bts = sorted(OC_MERCATI, key=lambda b: OC_MERCATI[b].get("p", 9999))
+    subs = {}
+    for i in range(0, len(bts), OC_CHUNK):
+        q = f"eventId={event_id}&betLimit=200&subeventLimit=60&" + "&".join(f"bettypeIds={b}" for b in bts[i:i + OC_CHUNK])
+        try:
+            r = s.get(f"{OC_API}/v1/subevent-group?{q}", headers=OC_HDR, timeout=60)
+        except Exception as e:
+            if i == 0: raise
+            log(f"[oddschecker] {comp} blocco {i}: {e}"); continue
+        if r.status_code == 404 and i > 0: continue
+        if r.status_code != 200:
+            if i == 0: raise RuntimeError(f"HTTP {r.status_code}")
+            log(f"[oddschecker] {comp} blocco {i}: HTTP {r.status_code}"); continue
+        for se in (r.json() or {}).get("subevents") or []:
+            if se.get("type") != "MATCH" or se.get("inRunning"): continue
+            if not in_finestra(parse_dt(se["startTime"])): continue
+            cur = subs.setdefault(se["id"], dict(se, markets=[]))
+            cur["markets"] += se.get("markets") or []
+        time.sleep(0.4)
+    out = []
+    for se in sorted(subs.values(), key=lambda x: x["startTime"])[:MAX_PER_LEGA]:
+        p = oc_build(comp, se)
+        if p["mercati"]: out.append(p)
+    return out
+
+def oc_build(comp, se):
     hn, an = (se["name"].split(" v ") + [""])[:2]
-    markets = []
-    for mid, v in (ca.get("oddsGrids") or {}).items():
-        q = (v.get("queries") or [{}])[0]
-        d = (q.get("state") or {}).get("data")
-        if not d or not d.get("bets"): continue
-        grp, name, cls, prio = info.get(int(mid), ("Altri", "Mercato", None, 9999))
-        if cls == "PLAYER_PROP": continue      # statistiche giocatore: troppo voluminose
+    hn, an = hn.strip(), an.strip()
+    markets, seen = [], set()
+    for mk in se["markets"]:
+        if mk["id"] in seen: continue
+        seen.add(mk["id"])
+        meta = OC_MERCATI.get(mk.get("betTypeId"), {})
+        name = meta.get("n") or mk.get("name") or "Mercato"
         sels = []
-        for b in d["bets"]:
+        for b in mk.get("bets") or []:
             o = {}
-            for x in b.get("odds", []):
-                if x.get("status") != "ACTIVE": continue
+            for x in b.get("odds") or []:
+                if x.get("status") not in (None, "ACTIVE"): continue
                 dec = x.get("decimal")
                 if not dec or dec <= 1: continue
                 o[x["bookmakerCode"]] = round(float(dec), 2)
             if not o: continue
+            sel = {"n": tr_sel(b["name"]), "o": o}
             line = (b.get("line") or {}).get("name")
-            lab = tr_sel(b["name"])
-            sel = {"n": lab, "o": o}
             if line: sel["l"] = line
             sels.append(sel)
         if not sels: continue
-        oc_norm_sels(name, sels, hn.strip(), an.strip())
-        markets.append({"n": tr_mercato(name), "g": grp, "p": prio, "s": sels})
+        oc_norm_sels(name, sels, hn, an)
+        markets.append({"n": tr_mercato(name), "g": meta.get("g", "Altri"), "p": meta.get("p", 9999), "s": sels})
     markets.sort(key=lambda m: (m["p"], m["n"]))
     for m in markets: m.pop("p", None)
     used = {c for m in markets for s_ in m["s"] for c in s_["o"]}
     return {
-        "id": f"oc-{se['id']}", "fonte": "oddschecker", "comp": comp,
-        "casa": hn.strip() or home, "ospite": an.strip() or away,
-        "inizio": iso(parse_dt(se["startTime"])), "url": OC + se["urlPath"],
-        "bk": {c: {"n": bks.get(c, {}).get("bookmakerName", c), "c": bks.get(c, {}).get("brandColour")} for c in sorted(used)},
+        "id": f"oc-{se['id']}", "fonte": "oddschecker", "comp": comp, "casa": hn, "ospite": an,
+        "inizio": iso(parse_dt(se["startTime"])), "url": OC + (se.get("urlPath") or "/it/calcio"),
+        "bk": {c: {"n": OC_BK.get(c, {}).get("n", c), "c": OC_BK.get(c, {}).get("c")} for c in sorted(used)},
         "mercati": markets,
     }
 
 def scrape_oddschecker():
     s = session()
-    jobs, errori = [], []
-    for nome, path in OC_LEGHE:
+    partite, errori = [], []
+    for comp, ev, path in OC_LEGHE:
         try:
-            subs, _ = oc_partite_lega(s, nome, path)
-            log(f"[oddschecker] {nome}: {len(subs)} partite")
-            jobs += [(nome, se) for se in subs]
+            ps = oc_lega(s, comp, ev, path)
+            log(f"[oddschecker] {comp}: {len(ps)} partite")
+            partite += ps
         except Exception as e:
-            errori.append(f"{nome}: {e}"); log(f"[oddschecker] ERRORE {nome}: {e}")
-        time.sleep(1)
-    partite = []
-    def run(job):
-        try:
-            return oc_partita(session(), *job)
-        except Exception as e:
-            errori.append(f"{job[1].get('name')}: {e}"); log(f"[oddschecker] ERRORE partita {job[1].get('name')}: {e}")
-    with ThreadPoolExecutor(3) as ex:
-        for r in ex.map(run, jobs):
-            if r and r["mercati"]: partite.append(r)
-    if jobs and not partite:
-        errori.append("nessuna partita letta (possibile blocco Cloudflare)")
+            errori.append(f"{comp}: {e}"); log(f"[oddschecker] ERRORE {comp}: {e}")
+        time.sleep(0.5)
     return partite, errori
 
 # --------------------------------------------------------------------------------------

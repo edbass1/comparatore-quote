@@ -1,0 +1,1019 @@
+{
+"mercati": {
+"1": {
+"n": "Vincente",
+"g": "Quote principali",
+"c": null,
+"p": 0,
+"en": "Win Market"
+},
+"1449": {
+"n": "Doppia Chance",
+"g": "Quote principali",
+"c": null,
+"p": 13,
+"en": "Double Chance"
+},
+"9": {
+"n": "Under/Over",
+"g": "Quote principali",
+"c": "OVER_UNDER",
+"p": 26,
+"en": "Total Goals Over/Under"
+},
+"4323": {
+"n": "Gol/No Gol",
+"g": "Quote principali",
+"c": null,
+"p": 43,
+"en": "Both Teams To Score"
+},
+"23644": {
+"n": "Rimborso in Caso di Parità",
+"g": "Quote principali",
+"c": null,
+"p": 167,
+"en": "Draw No Bet"
+},
+"4": {
+"n": "Esito Parziale / Finale",
+"g": "Quote principali",
+"c": null,
+"p": 169,
+"en": "Half Time/Full Time"
+},
+"1875": {
+"n": "Vincente non subendo gol",
+"g": "Quote principali",
+"c": null,
+"p": 217,
+"en": "To Win To Nil"
+},
+"193850": {
+"n": "Esito Finale e Gol",
+"g": "Quote principali",
+"c": null,
+"p": 265,
+"en": "Match Result And Both Teams To Score"
+},
+"1410": {
+"n": "Risultato 1° tempo",
+"g": "Quote principali",
+"c": null,
+"p": 266,
+"en": "Half Time"
+},
+"2013": {
+"n": "Risultato 2° tempo",
+"g": "Quote principali",
+"c": null,
+"p": 307,
+"en": "Second Half Result"
+},
+"1186": {
+"n": "Risultato Esatto",
+"g": "Quote principali",
+"c": null,
+"p": 309,
+"en": "Correct Score"
+},
+"2006": {
+"n": "Risultato esatto - 1° Tempo",
+"g": "Quote principali",
+"c": "SCORE",
+"p": 312,
+"en": "Correct Score - 1st Half"
+},
+"2147": {
+"n": "Handicap",
+"g": "Quote principali",
+"c": "SPREAD",
+"p": 313,
+"en": "Handicaps"
+},
+"1447": {
+"n": "Handicap - 1° Tempo",
+"g": "Quote principali",
+"c": "SPREAD",
+"p": 315,
+"en": "Handicap - 1st Half"
+},
+"1990": {
+"n": "Vincente in Entrambi i Tempi",
+"g": "Quote principali",
+"c": null,
+"p": 594,
+"en": "To Win Both Halves"
+},
+"2003": {
+"n": "Vincente Entrambi i tempi",
+"g": "Quote principali",
+"c": null,
+"p": 595,
+"en": "To Win Either Half"
+},
+"2004": {
+"n": "Vincente in rimonta",
+"g": "Quote principali",
+"c": null,
+"p": 596,
+"en": "To Win From Behind"
+},
+"537": {
+"n": "Handicap Asiatico",
+"g": "Scommesse handicap",
+"c": "SPREAD",
+"p": 1002,
+"en": "Asian Handicap"
+},
+"2989": {
+"n": "Calci d angolo handicap",
+"g": "Scommesse handicap",
+"c": "SPREAD",
+"p": 1014,
+"en": "Corner Handicap"
+},
+"2560": {
+"n": "Totale Gol Squadra Casa",
+"g": "Scommesse sul Risultato",
+"c": "OVER_UNDER",
+"p": 2004,
+"en": "Total Home Goals"
+},
+"2561": {
+"n": "Totale gol Squadra Ospite",
+"g": "Scommesse sul Risultato",
+"c": "OVER_UNDER",
+"p": 2005,
+"en": "Total Away Goals"
+},
+"4436": {
+"n": "Totale Gol Esatto",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2012,
+"en": "Total Goals Exact"
+},
+"1534": {
+"n": "Squadra che Segna per Ultima",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2014,
+"en": "Team To Score Last"
+},
+"1457": {
+"n": "Squadra che segna per prima",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2025,
+"en": "Team To Score First"
+},
+"1593": {
+"n": "Punteggio più alto 1T/2T",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2033,
+"en": "Highest Scoring Half"
+},
+"69709": {
+"n": "Totale Gol Esatti - Primo Tempo",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2036,
+"en": "Total Goals Exact - 1st Half"
+},
+"69712": {
+"n": "Totale Gol Esatti - Secondo Tempo",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2037,
+"en": "Total Goals Exact - 2nd Half"
+},
+"76885": {
+"n": "Entrambe le squadre a Segno 2 tempo",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2105,
+"en": "Both Teams To Score In 2nd Half"
+},
+"52480": {
+"n": "Totale Gol Esatti Squadra Casa",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2112,
+"en": "Total Home Goals Exact"
+},
+"52483": {
+"n": "Totale Gol Esatti Squadra Ospite",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2113,
+"en": "Total Away Goals Exact"
+},
+"44506": {
+"n": "Entrambe le squadre a Segno 1 tempo",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2119,
+"en": "Both Teams To Score In 1st Half"
+},
+"38122": {
+"n": "Totale Goal Pari - Dispari Secondo tempo",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2145,
+"en": "Total Goals Odd/Even - 2nd Half"
+},
+"1995": {
+"n": "Segnare in Entrambi i Tempi",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2147,
+"en": "To Score In Both Halves"
+},
+"2284": {
+"n": "Gol totali Pari/Dispari",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2152,
+"en": "Total Goals Odd/Even"
+},
+"2482": {
+"n": "Totale Gol - Secondo Tempo",
+"g": "Scommesse sul Risultato",
+"c": "OVER_UNDER",
+"p": 2155,
+"en": "Total Goals - 2nd Half"
+},
+"1434": {
+"n": "Totale calci d'angolo ",
+"g": "Scommesse extra",
+"c": "OVER_UNDER",
+"p": 4029,
+"en": "Total Corners"
+},
+"1055": {
+"n": "Margine Vittoria",
+"g": "Scommesse extra",
+"c": null,
+"p": 4061,
+"en": "Winning Margin"
+},
+"1453": {
+"n": "Minuto del Primo Gol",
+"g": "Scommesse extra",
+"c": null,
+"p": 4095,
+"en": "Time Of First Goal"
+},
+"1568": {
+"n": "Primo Calcio D'angolo",
+"g": "Scommesse extra",
+"c": null,
+"p": 4096,
+"en": "First Corner"
+},
+"1938": {
+"n": "Porta inviolata",
+"g": "Scommesse extra",
+"c": null,
+"p": 4152,
+"en": "Clean Sheet"
+},
+"2000": {
+"n": "Segnare un rigore",
+"g": "Scommesse extra",
+"c": null,
+"p": 4154,
+"en": "To Score A Penalty"
+},
+"3920": {
+"n": "Sbagliare il Rigore",
+"g": "Scommesse extra",
+"c": null,
+"p": 4160,
+"en": "To Miss A Penalty"
+},
+"2097": {
+"n": "Piu' calci d'angolo",
+"g": "Scommesse extra",
+"c": null,
+"p": 4161,
+"en": "Most Corners"
+},
+"1101386357": {
+"n": "Late Goal",
+"g": "Più",
+"c": null,
+"p": 7487,
+"en": "Late Goal"
+},
+"1067685450": {
+"n": "Asian Total",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7890,
+"en": "Asian Total"
+},
+"1063567427": {
+"n": "Gol di testa",
+"g": "Più mercati",
+"c": "PLAYER",
+"p": 8019,
+"en": "To Score a Header"
+},
+"1085088000": {
+"n": "Gol totali 3 opzioni",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8021,
+"en": "Total Goals 3-Way"
+},
+"1085318676": {
+"n": "Totale calci d'angolo 3 opzioni",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8022,
+"en": "Total Corners 3-Way"
+},
+"32150954": {
+"n": "Doppia Chance e entrambe le squadre segnano",
+"g": "Quote principali",
+"c": null,
+"p": 385,
+"en": "Double Chance And Both Teams To Score"
+},
+"193841": {
+"n": "Esito Finale e Over/Under 2.5",
+"g": "Quote principali",
+"c": null,
+"p": 412,
+"en": "Match Result and Over/Under 2.5"
+},
+"193844": {
+"n": "Esito Finale e Over/Under 3.5",
+"g": "Quote principali",
+"c": null,
+"p": 413,
+"en": "Match Result and Over/Under 3.5"
+},
+"4823627": {
+"n": "Esito Finale e Over/Under 4.5",
+"g": "Quote principali",
+"c": null,
+"p": 490,
+"en": "Match Result and Over/Under 4.5"
+},
+"1101405291": {
+"n": "Double Chance And Total Goals",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2023,
+"en": "Double Chance And Total Goals"
+},
+"45097": {
+"n": "Entrambe le squadre segnano in entrambi i tempi",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2034,
+"en": "Both Teams To Score In Both Halves"
+},
+"4221506": {
+"n": "Totale gol 1 tempo Squadra Casa",
+"g": "Scommesse sul Risultato",
+"c": "OVER_UNDER",
+"p": 2085,
+"en": "Total Home Goals - 1st Half"
+},
+"4221503": {
+"n": "Totale gol Primo tempo Squadra Ospite",
+"g": "Scommesse sul Risultato",
+"c": "OVER_UNDER",
+"p": 2095,
+"en": "Total Away Goals - 1st Half"
+},
+"73027": {
+"n": "Gol in entrambi I tempi",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2114,
+"en": "Goal In Both Halves"
+},
+"1535366": {
+"n": "Entrambe a segno e Over/Under 2.5",
+"g": "Scommesse sul Risultato",
+"c": null,
+"p": 2118,
+"en": "Both Teams To Score And Over/Under 2.5"
+},
+"2481": {
+"n": "Totale Gol - Primo Tempo",
+"g": "Scommesse sul Risultato",
+"c": "OVER_UNDER",
+"p": 2154,
+"en": "Total Goals - 1st Half"
+},
+"1093": {
+"n": "Primo Marcatore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3001,
+"en": "First Goalscorer"
+},
+"158079025": {
+"n": "Assist Giocatore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER_PROP",
+"p": 3028,
+"en": "Player Assists"
+},
+"177440746": {
+"n": "Tiri in porta giocatore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER_PROP",
+"p": 3052,
+"en": "Player Shots On Target"
+},
+"1450": {
+"n": "Ultimo Marcatore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3068,
+"en": "Last Goalscorer"
+},
+"1451": {
+"n": "Marcatore in qualsiasi momento",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3069,
+"en": "Anytime Goalscorer"
+},
+"1994": {
+"n": "Segnare una Tripletta",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3073,
+"en": "To Score A Hat-Trick"
+},
+"2584": {
+"n": "Segnare 2 o piu' Gol",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3084,
+"en": "To Score 2 Or More Goals"
+},
+"1059929171": {
+"n": "Tiri Giocatore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER_PROP",
+"p": 3117,
+"en": "Player Shots"
+},
+"1101385948": {
+"n": "Both Teams To Score And Over/Under 4.5",
+"g": "Più",
+"c": null,
+"p": 7373,
+"en": "Both Teams To Score And Over/Under 4.5"
+},
+"1101385947": {
+"n": "Both Teams To Score And Over/Under 3.5",
+"g": "Più",
+"c": null,
+"p": 7375,
+"en": "Both Teams To Score And Over/Under 3.5"
+},
+"1077613396": {
+"n": "Player Passes",
+"g": "Più",
+"c": null,
+"p": 7456,
+"en": "Player Passes"
+},
+"1054641868": {
+"n": "Esito Vincente Potenziato",
+"g": "Più mercati",
+"c": null,
+"p": 8000,
+"en": "Enhanced Win Market"
+},
+"1064965716": {
+"n": "Primo marcatore squadra ospite",
+"g": "Più mercati",
+"c": null,
+"p": 8014,
+"en": "First Away Team Goalscorer"
+},
+"1064965717": {
+"n": "Primo marcatore squadra di casa",
+"g": "Più mercati",
+"c": null,
+"p": 8015,
+"en": "First Home Team Goalscorer"
+},
+"177440745": {
+"n": "Fuorigioco giocatore",
+"g": "Più mercati",
+"c": null,
+"p": 8018,
+"en": "Player Offsides"
+},
+"4221509": {
+"n": "Totale gol 2 tempo Squadra Casa",
+"g": "Scommesse sul Risultato",
+"c": "OVER_UNDER",
+"p": 2086,
+"en": "Total Home Goals - 2nd Half"
+},
+"4221512": {
+"n": "Totale gol  Secondo tempo Squadra Ospite",
+"g": "Scommesse sul Risultato",
+"c": "OVER_UNDER",
+"p": 2087,
+"en": "Total Away Goals - 2nd Half"
+},
+"1101301078": {
+"n": "Falli subiti dal giocatore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER_PROP",
+"p": 3033,
+"en": "Player Fouls Won"
+},
+"177440747": {
+"n": "Contrasti giocatore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER_PROP",
+"p": 3051,
+"en": "Player Tackles"
+},
+"33787": {
+"n": "+ Cartellino",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3120,
+"en": "To Be Shown A Card"
+},
+"1086772390": {
+"n": "Gol o Assist",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3125,
+"en": "To Score Or Assist"
+},
+"1062463632": {
+"n": "Falli giocatore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER_PROP",
+"p": 3141,
+"en": "Player Fouls"
+},
+"3386": {
+"n": "Giocatore Espulso",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3148,
+"en": "Player to be Sent Off"
+},
+"2384": {
+"n": "Primo Giocatore Ammonito",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3156,
+"en": "First Player Booking"
+},
+"4376": {
+"n": "Segnare fuori dall'area di rigore",
+"g": "Scommesse sul giocatore",
+"c": "PLAYER",
+"p": 3157,
+"en": "To Score From Outside Penalty Box"
+},
+"2078": {
+"n": "Prima squadra ammonita",
+"g": "Scommesse extra",
+"c": null,
+"p": 4111,
+"en": "First Team Booking"
+},
+"2495": {
+"n": "Primo tempo totale calci d'angolo",
+"g": "Scommesse extra",
+"c": "OVER_UNDER",
+"p": 4117,
+"en": "Total Corners - 1st Half"
+},
+"2588": {
+"n": "Esplulsione in una partita",
+"g": "Scommesse extra",
+"c": null,
+"p": 4119,
+"en": "Sending Off In Match"
+},
+"2589": {
+"n": "Rigore in partita",
+"g": "Scommesse extra",
+"c": null,
+"p": 4156,
+"en": "Penalty In Match"
+},
+"1085087500": {
+"n": "Totale cartellini 3 opzioni",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8023,
+"en": "Total Cards 3-Way"
+},
+"2051": {
+"n": "Totale Cartellini",
+"g": "Scommesse extra",
+"c": "OVER_UNDER",
+"p": 4035,
+"en": "Total Cards"
+},
+"4466": {
+"n": "Totale calci d angolo squadra casa",
+"g": "Scommesse extra",
+"c": "OVER_UNDER",
+"p": 4081,
+"en": "Total Home Corners"
+},
+"4467": {
+"n": "Totale calci d'angolo Squadra Ospite",
+"g": "Scommesse extra",
+"c": "OVER_UNDER",
+"p": 4082,
+"en": "Total Away Corners"
+},
+"70062005": {
+"n": "Richiedi una Scommessa",
+"g": "Scommesse a Richiesta",
+"c": null,
+"p": 6000,
+"en": "Request-A-Bet"
+},
+"1101411452": {
+"n": "Total Away Cards - 2nd Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7624,
+"en": "Total Away Cards - 2nd Half"
+},
+"1101411450": {
+"n": "Total Home Cards - 2nd Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7626,
+"en": "Total Home Cards - 2nd Half"
+},
+"1101411451": {
+"n": "Total Away Cards - 1st Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7627,
+"en": "Total Away Cards - 1st Half"
+},
+"1101411448": {
+"n": "Total Cards - 1st Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7628,
+"en": "Total Cards - 1st Half"
+},
+"1101411449": {
+"n": "Total Home Cards - 1st Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7630,
+"en": "Total Home Cards - 1st Half"
+},
+"1101411420": {
+"n": "Total Away Corners - 2nd Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7633,
+"en": "Total Away Corners - 2nd Half"
+},
+"1101411418": {
+"n": "Total Home Corners - 1st Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7635,
+"en": "Total Home Corners - 1st Half"
+},
+"1101411419": {
+"n": "Total Home Corners - 2nd Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7636,
+"en": "Total Home Corners - 2nd Half"
+},
+"1101411417": {
+"n": "Total Away Corners - 1st Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7637,
+"en": "Total Away Corners - 1st Half"
+},
+"46630": {
+"n": "Total Cards - 2nd Half",
+"g": "Più",
+"c": "OVER_UNDER",
+"p": 7641,
+"en": "Total Cards - 2nd Half"
+},
+"1062935527": {
+"n": "Totale tiri match",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8005,
+"en": "Match Total Shots"
+},
+"46615": {
+"n": "Totale Cartellini Squadra Ospite",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8006,
+"en": "Total Away Team Cards"
+},
+"46618": {
+"n": "Totale cartellini Squadra Casa",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8007,
+"en": "Total Home Team Cards"
+},
+"325454": {
+"n": "Totale tiri in porta squadra ospite",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8009,
+"en": "Total Away Shots On Target"
+},
+"325451": {
+"n": "Totale tiri in porta squadra casa",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8010,
+"en": "Total Home Shots On Target"
+},
+"1062934298": {
+"n": "Tiri in porta match",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8011,
+"en": "Match Shots On Target"
+},
+"1101396553": {
+"n": "Total Away Shots",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8016,
+"en": "Total Away Shots"
+},
+"1101396552": {
+"n": "Total Home Shots",
+"g": "Più mercati",
+"c": "OVER_UNDER",
+"p": 8017,
+"en": "Total Home Shots"
+}
+},
+"bookmaker": {
+"NTW": {
+"n": "NetWin IT",
+"c": "#1D1D25"
+},
+"BSS": {
+"n": "Betsson Italia Sport",
+"c": "#FC6404"
+},
+"I3": {
+"n": "Bet365 Italy",
+"c": "#017A5B"
+},
+"GA": {
+"n": "GoldBet",
+"c": "#1E4474"
+},
+"FI": {
+"n": "Betfair Sportsbook Italy",
+"c": "#FFB80C"
+},
+"M3": {
+"n": "Marathon Bet Italy",
+"c": "#f2f5f6"
+},
+"RA": {
+"n": "Star Casino Bet",
+"c": "#f2f5f6"
+},
+"NA": {
+"n": "Snai",
+"c": "#4C565C"
+},
+"V3": {
+"n": "Vincitu IT",
+"c": "#FCFAFA"
+},
+"EU": {
+"n": "Eurobet",
+"c": "#243561"
+},
+"FLS": {
+"n": "BetFlag Sportsbook",
+"c": "#f2f5f6"
+},
+"IS": {
+"n": "Stanleybet Italy",
+"c": "#b60000"
+},
+"AZ": {
+"n": "DAZN Bet IT",
+"c": "#111111"
+},
+"HI": {
+"n": "William Hill Italy",
+"c": "#000066"
+},
+"LM": {
+"n": "Lottomatica",
+"c": "#003594"
+},
+"NE": {
+"n": "Netbet",
+"c": "#1F1F20"
+},
+"IR": {
+"n": "Stanleybet Casino Italy",
+"c": "#b60000"
+},
+"M4": {
+"n": "Marathon Bet Casino Italy",
+"c": "#f2f5f6"
+},
+"S2": {
+"n": "StarCasino",
+"c": "#254764"
+},
+"L1": {
+"n": "Leo Vegas Italy",
+"c": "#FF714A"
+},
+"P4": {
+"n": "Planetwin 365",
+"c": "#22252c"
+},
+"ADM": {
+"n": "AdmiralBet",
+"c": "#00008B"
+},
+"SM": {
+"n": "Sisal Matchpoint",
+"c": "#F2F2ED"
+},
+"WI": {
+"n": "Bwin Italia",
+"c": "#080404"
+},
+"FL": {
+"n": "BetFlag",
+"c": "#033A5F"
+},
+"STA": {
+"n": "Stake Sport Italia",
+"c": "#001d2b"
+},
+"SPI": {
+"n": "Spin Palace",
+"c": "#000435"
+},
+"OCM": {
+"n": "Multiregistrazione",
+"c": "#90BA36"
+},
+"I3C": {
+"n": "bet365 Italy Casino",
+"c": "#017A5B"
+},
+"ZHQ": {
+"n": "Betway IT Casino",
+"c": "#231F20"
+},
+"STV": {
+"n": "StarVegas",
+"c": "#101734"
+},
+"V3C": {
+"n": "Vincitu Casino",
+"c": "#FCFAFA"
+},
+"JPI": {
+"n": "Jackpot City Casino Italy",
+"c": "#232323"
+},
+"WIQ": {
+"n": "Bwin Casino Italy",
+"c": "#080404"
+},
+"GIQ": {
+"n": "Gioco Digitale Casino",
+"c": "#383833"
+},
+"BSQ": {
+"n": "Betsson Casino Italia",
+"c": "#FC6404"
+},
+"DOM": {
+"n": "Domusbet Italia",
+"c": "#1f1e1c"
+},
+"DOQ": {
+"n": "Domusbet Casino Italia",
+"c": "#1f1e1c"
+},
+"FIV": {
+"n": "Fivebet Sport Italia",
+"c": null
+},
+"QUC": {
+"n": "Quigioco Casino Italia",
+"c": "#002a56"
+},
+"OCT": {
+"n": "CTA",
+"c": "#1d445d"
+},
+"SUB": {
+"n": "Sunbet Sport Italia",
+"c": "#4e627d"
+},
+"SUC": {
+"n": "Sunbet Casino Italia",
+"c": "#4e627d"
+},
+"ST1": {
+"n": "Stake Casino Italia",
+"c": "#001d2b"
+},
+"SPO": {
+"n": "Sportium Sport Italia",
+"c": "#da1823"
+},
+"SPQ": {
+"n": "Sportium Casino Italia",
+"c": "#da1823"
+},
+"BWN": {
+"n": "Betwin360 Sport Italia",
+"c": "#333333"
+},
+"BWQ": {
+"n": "Betwin360 Casino Italia",
+"c": "#333333"
+},
+"IP": {
+"n": "Pokerstars Sports Italy",
+"c": "#000000"
+},
+"COD": {
+"n": "Codere Sport Italy",
+"c": null
+},
+"COC": {
+"n": "Codere Casino Italy",
+"c": null
+},
+"EPQ": {
+"n": "E-play24 Casino",
+"c": "#000000"
+},
+"QUS": {
+"n": "Quigioco Sport Italia",
+"c": "#002a56"
+},
+"PYQ": {
+"n": "PerlaPlay Casino Italia",
+"c": "#22334b"
+},
+"EPS": {
+"n": "E-play24 Sport",
+"c": "#000000"
+},
+"STR": {
+"n": "StarVegas Italia",
+"c": "#101734"
+},
+"PYS": {
+"n": "PerlaPlay Sport Italia",
+"c": "#22334b"
+},
+"MLQ": {
+"n": "MyLotteries Play Casino",
+"c": "#004795"
+},
+"MLP": {
+"n": "MyLotteries Play Sport",
+"c": "#004795"
+}
+}
+}
