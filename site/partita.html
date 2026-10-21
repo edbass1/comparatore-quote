@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Quote partita · Comparatore Quote</title>
+<link rel="stylesheet" href="app.css">
+</head><body>
+<header class="top"><div class="wrap">
+  <div class="brand"><a id="back" href="index.html" class="logo" title="Torna all'elenco">←</a><div><h1>Comparatore Quote</h1><small>Confronto quote per tipo di scommessa</small></div></div>
+</div></header>
+<main class="wrap" id="main">
+  <div class="mh" id="mh"><div class="empty">Caricamento…</div></div>
+  <div class="search"><span class="ico">🔍</span><input id="mq" type="search" placeholder="Cerca tipo di scommessa (es. under 2.5, gol, esatto, handicap)…" autocomplete="off"><button class="clr" id="mclr" aria-label="Cancella">✕</button></div>
+  <div class="row"><select id="msel" aria-label="Scegli il tipo di scommessa"></select></div>
+  <div class="chips" id="mchips"></div>
+  <div class="hint">La quota migliore per ogni esito è evidenziata in giallo. Scorri la tabella in orizzontale per vedere tutti i bookmaker.</div>
+  <div id="markets"></div>
+  <footer>Quote raccolte automaticamente; possono variare: verifica sempre sul sito del bookmaker. Orari in ora italiana. 18+ · Il gioco può causare dipendenza patologica.</footer>
+</main>
+<script src="app.js"></script><script>partita()</script>
+</body></html>

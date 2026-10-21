@@ -1,0 +1,57 @@
+name: Aggiorna quote
+
+on:
+  schedule:
+    # ogni 30 minuti (orari UTC; GitHub può ritardare l'avvio di qualche minuto)
+    - cron: "7,37 * * * *"
+  workflow_dispatch:          # avvio manuale: Actions > Aggiorna quote > Run workflow
+  push:
+    branches: [main]
+    paths-ignore:
+      - "stato/**"
+      - "README.md"
+
+permissions:
+  contents: write             # per il commit di stato/ultimo-aggiornamento.json (mantiene attivo il cron)
+  pages: write
+  id-token: write
+
+concurrency:
+  group: aggiorna-quote
+  cancel-in-progress: false
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Installa dipendenze
+        run: pip install -r requirements.txt
+      - name: Scarica quote (Oddschecker Italia + Oddspedia Italia)
+        env:
+          PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        run: |
+          mkdir -p site_out
+          cp -r site/. site_out/
+          python scraper/fetch.py --out site_out
+          cp site_out/data/stato.json stato/ultimo-aggiornamento.json
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site_out
+      - id: deployment
+        uses: actions/deploy-pages@v5
+      - name: Commit stato (mantiene attiva la pianificazione)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898237+github-actions[bot]@users.noreply.github.com"
+          git add stato/ultimo-aggiornamento.json
+          git commit -m "Quote aggiornate $(date -u +'%Y-%m-%d %H:%M') UTC" || exit 0
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
