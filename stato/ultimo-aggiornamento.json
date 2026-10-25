@@ -1,23 +1,23 @@
 {
- "generato": "2026-10-25T19:07:19Z",
+ "generato": "2026-10-25T19:56:21Z",
  "fonti": {
   "oddschecker": {
    "nome": "Oddschecker Italia",
    "ok": true,
    "vecchi": null,
-   "n_partite": 47,
+   "n_partite": 50,
    "n_errori": 2,
-   "aggiornato_ok": "2026-10-25T19:08:32Z",
-   "durata_s": 73
+   "aggiornato_ok": "2026-10-25T19:57:33Z",
+   "durata_s": 72
   },
   "oddspedia": {
    "nome": "Oddspedia Italia",
    "ok": true,
    "vecchi": null,
-   "n_partite": 2,
+   "n_partite": 1,
    "n_errori": 0,
-   "aggiornato_ok": "2026-10-25T19:09:13Z",
-   "durata_s": 41
+   "aggiornato_ok": "2026-10-25T19:58:08Z",
+   "durata_s": 35
   }
  }
 }
