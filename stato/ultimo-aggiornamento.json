@@ -1,14 +1,14 @@
 {
- "generato": "2026-10-29T09:52:01Z",
+ "generato": "2026-10-29T10:49:39Z",
  "fonti": {
   "oddschecker": {
    "nome": "Oddschecker Italia",
    "ok": true,
    "vecchi": null,
    "n_partite": 68,
-   "n_errori": 2,
-   "aggiornato_ok": "2026-10-29T09:53:20Z",
-   "durata_s": 79
+   "n_errori": 1,
+   "aggiornato_ok": "2026-10-29T10:51:15Z",
+   "durata_s": 96
   },
   "oddspedia": {
    "nome": "Oddspedia Italia",
@@ -16,8 +16,8 @@
    "vecchi": null,
    "n_partite": 64,
    "n_errori": 0,
-   "aggiornato_ok": "2026-10-29T10:05:12Z",
-   "durata_s": 712
+   "aggiornato_ok": "2026-10-29T10:55:04Z",
+   "durata_s": 228
   }
  }
 }
