@@ -43,6 +43,48 @@ function statoHTML(st, fonte) {
   return `<div class="status ko">⛔ ${link} <b>non disponibile</b> in questo momento (tentativo delle ${fmtOra(st.aggiornato)} ora italiana). Nessuna quota mostrata per questa fonte.${st.errori && st.errori.length ? `<br><small>${esc(st.errori[0])}</small>` : ""}</div>`;
 }
 
+
+/* ---------- schedina multipla rapida: selezioni cliccando le quote ---------- */
+function setupMultiplaRapida(d, fonte, id) {
+  const KEY = "cq_schedina_v1";
+  let legs = [];
+  try { legs = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { legs = []; }
+  const save = () => localStorage.setItem(KEY, JSON.stringify(legs));
+  const panel = document.createElement("aside");
+  panel.id = "quick-slip";
+  panel.className = "quick-slip";
+  document.body.appendChild(panel);
+  function render() {
+    const common = legs.length ? legs.reduce((a, x) => a.filter(k => x.odds[k] != null), Object.keys(legs[0].odds)) : [];
+    const rows = common.map(code => ({code, name: legs.find(x => x.books[code])?.books[code]?.n || code, total: legs.reduce((v,x)=>v*Number(x.odds[code]),1), values: legs.map(x=>Number(x.odds[code]))})).sort((a,b)=>b.total-a.total);
+    panel.innerHTML = '<div class="qs-head"><strong>🧾 La tua multipla <span>' + legs.length + '</span></strong><button type="button" class="qs-close" aria-label="Nascondi">−</button></div>' +
+      (legs.length ? '<div class="qs-legs">' + legs.map((x,i)=>'<div class="qs-leg"><div><b>'+esc(x.match)+'</b><small>'+esc(x.market+' · '+x.outcome)+'</small></div><button data-remove="'+i+'" type="button" aria-label="Rimuovi">×</button></div>').join('') + '</div>' : '<p class="qs-empty">Clicca su una quota nelle tabelle per aggiungere la prima selezione.</p>') +
+      (rows.length ? '<div class="qs-rank"><div class="qs-caption">Migliori quote totali · stesso bookmaker</div>'+rows.slice(0,8).map((r,i)=>'<div class="qs-book '+(i===0?'winner':'')+'"><b>'+(i===0?'★ ':'')+esc(r.name)+'</b><strong>'+q2(r.total)+'</strong><small>'+r.values.map(q2).join(' × ')+'</small></div>').join('')+'</div>' : (legs.length>1 ? '<p class="qs-warning">Nessun bookmaker offre tutte le selezioni. Prova a cambiare una giocata.</p>' : '')) +
+      '<div class="qs-actions"><button type="button" data-clear> Svuota schedina </button><a href="multipla.html">Apri generatore completo</a></div>';
+    panel.querySelector(".qs-close").onclick = () => panel.classList.toggle("collapsed");
+    panel.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{legs.splice(Number(b.dataset.remove),1);save();render();});
+    const clear=panel.querySelector("[data-clear]"); if(clear) clear.onclick=()=>{legs=[];save();render();};
+    panel.querySelectorAll(".qs-leg").forEach((el,i)=>{ if(legs[i] && legs[i].matchId===id) el.title="Selezione della partita corrente"; });
+    document.body.classList.toggle("has-quick-slip", legs.length>0);
+  }
+  function add(mi,si) {
+    const market=d.mercati[mi], selection=market && market.s[si];
+    if(!selection || !selection.o || !Object.keys(selection.o).length) return;
+    const key=fonte+":"+id+":"+mi+":"+si;
+    const old=legs.findIndex(x=>x.key===key);
+    if(old>=0) legs.splice(old,1);
+    else legs.push({key,matchId:id,source:fonte,match:d.casa+" – "+d.ospite,market:market.n+(selection.l?" · "+selection.l:""),outcome:selection.n,odds:{...selection.o},books:{...d.bk}});
+    save(); render();
+  }
+  document.querySelectorAll("#markets").forEach(root=>root.addEventListener("click",e=>{
+    const b=e.target.closest(".odds-pick"); if(!b) return;
+    add(Number(b.dataset.market),Number(b.dataset.selection));
+    b.classList.toggle("picked",legs.some(x=>x.key===fonte+":"+id+":"+b.dataset.market+":"+b.dataset.selection));
+  }));
+  render();
+  document.addEventListener("click",e=>{const b=e.target.closest(".odds-pick");if(b)b.classList.toggle("picked",legs.some(x=>x.key===fonte+":"+id+":"+b.dataset.market+":"+b.dataset.selection));});
+}
+
 /* ===================================================== HOME ===================================================== */
 async function home() {
   setupFab();
@@ -161,7 +203,8 @@ async function partita() {
   catch (e) { $("#main").innerHTML = `<div class="status ko">⛔ Partita non trovata o non più disponibile (forse è già iniziata). <a href="index.html?f=${fonte}">Torna all'elenco</a></div>`; return; }
   document.title = `${d.casa} – ${d.ospite} · Quote ${FONTI[fonte].nome}`;
   $("#mh").innerHTML = `<div class="c">${esc(d.comp)} · fonte ${esc(FONTI[fonte].nome)} Italia</div><h2>${esc(d.casa)} – ${esc(d.ospite)}</h2><div class="w">${esc(fmtDT(d.inizio))} · ${d.mercati.length} mercati · ${Object.keys(d.bk).length} bookmaker · <a href="${esc(d.url)}" target="_blank" rel="noopener">vedi su ${esc(FONTI[fonte].nome)} ↗</a></div>` + (idx ? statoHTML(idx.stato, fonte) : "");
-  d.mercati.forEach((m, i) => m.i = i);
+  d.mercati.forEach((m, i) => { m.i = i; m.s.forEach((x, j) => x._si = j); });
+  setupMultiplaRapida(d, fonte, id);
   const sel = $("#msel");
   sel.innerHTML = `<option value="">— Scegli il tipo di scommessa (${d.mercati.length}) —</option>` + d.mercati.map(m => `<option value="${m.i}">${esc(m.n)}</option>`).join("");
   let chip = 0, only = null;
@@ -184,7 +227,7 @@ async function partita() {
       bks.sort((a, b) => (sels[0].o[b] || 0) - (sels[0].o[a] || 0) || bname(a).localeCompare(bname(b)));
       let h = `<table><thead><tr><th class="k">Bookmaker</th>${sels.map(s => `<th>${esc(s.n)}</th>`).join("")}</tr></thead><tbody>`;
       h += `<tr class="bestrow"><td class="k">★ Quota migliore</td>${sels.map((s, i) => `<td>${q2(best[i])}<span class="bn">${esc(bestBk[i].map(bname).slice(0, 2).join(", "))}${bestBk[i].length > 2 ? " +" + (bestBk[i].length - 2) : ""}</span></td>`).join("")}</tr>`;
-      for (const b of bks) h += `<tr><td class="k">${dot(b)}${esc(bname(b))}</td>${sels.map((s, i) => { const v = s.o[b]; return `<td class="${v != null && v === best[i] ? "best" : ""}">${v != null ? q2(v) : "–"}</td>`; }).join("")}</tr>`;
+      for (const b of bks) h += `<tr><td class="k">${dot(b)}${esc(bname(b))}</td>${sels.map((s, i) => { const v = s.o[b]; return `<td class="${v != null && v === best[i] ? "best" : ""}">${v != null ? `<button class="odds-pick" data-market="${m.i}" data-selection="${s._si}" title="Aggiungi alla multipla">${q2(v)}</button>` : "–"}</td>`; }).join("")}</tr>`;
       if (sels.length >= 2) {
         const marg = best.reduce((a, v) => a + 1 / v, 0);
         h += `<tr><td class="k" style="color:var(--mut)">Payout con quote migliori</td><td colspan="${sels.length}" style="color:${marg < 1 ? "var(--best)" : "var(--mut)"}">${(100 / marg).toFixed(1)}%${marg < 1 ? " (surebet!)" : ""}</td></tr>`;
@@ -195,7 +238,7 @@ async function partita() {
     bks.sort((a, b) => bname(a).localeCompare(bname(b)));
     let h = `<table><thead><tr><th class="k">Esito</th><th>★ Migliore</th>${bks.map(b => `<th>${dot(b)}${esc(bname(b))}</th>`).join("")}</tr></thead><tbody>`;
     sels.forEach((s, i) => {
-      h += `<tr><td class="k">${esc(s.n)}</td><td class="bestc">${q2(best[i])}<span class="bn">${esc(bestBk[i].map(bname).slice(0, 1).join(""))}${bestBk[i].length > 1 ? " +" + (bestBk[i].length - 1) : ""}</span></td>${bks.map(b => { const v = s.o[b]; return `<td class="${v != null && v === best[i] ? "best" : ""}">${v != null ? q2(v) : "–"}</td>`; }).join("")}</tr>`;
+      h += `<tr><td class="k">${esc(s.n)}</td><td class="bestc">${q2(best[i])}<span class="bn">${esc(bestBk[i].map(bname).slice(0, 1).join(""))}${bestBk[i].length > 1 ? " +" + (bestBk[i].length - 1) : ""}</span></td>${bks.map(b => { const v = s.o[b]; return `<td class="${v != null && v === best[i] ? "best" : ""}">${v != null ? `<button class="odds-pick" data-market="${m.i}" data-selection="${s._si}" title="Aggiungi alla multipla">${q2(v)}</button>` : "–"}</td>`; }).join("")}</tr>`;
     });
     return h + `</tbody></table>`;
   }
