@@ -54,8 +54,8 @@ async function home() {
 
   function drawTabs() {
     tabs.innerHTML = Object.entries(FONTI).map(([k, v]) => `<button class="tab ${k === fonte ? "on" : ""}" data-f="${k}">${v.nome}</button>`).join("") +
-      `<button class="tab ${fonte === "info" ? "on" : ""}" data-f="info">ℹ️ Fonti</button>`;
-    tabs.querySelectorAll(".tab").forEach(b => b.onclick = () => { fonte = b.dataset.f; compSel = ""; if (fonte !== "info") localStorage.setItem("cq_fonte", fonte); history.replaceState(null, "", "?f=" + fonte); $("#q").value = ""; load(); });
+      `<button class="tab ${fonte === "info" ? "on" : ""}" data-f="info">ℹ️ Fonti</button>` + `<button class="tab" data-go="multipla">🧮 Genera multipla</button>`;
+    tabs.querySelectorAll(".tab").forEach(b => b.onclick = () => { if (b.dataset.go === "multipla") { location.href = "multipla.html"; return; } fonte = b.dataset.f; compSel = ""; if (fonte !== "info") localStorage.setItem("cq_fonte", fonte); history.replaceState(null, "", "?f=" + fonte); $("#q").value = ""; load(); });
   }
 
   async function info() {
