@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Genera Multipla · Comparatore Quote</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%2322d3a6%22/%3E%3Ctext x=%2250%22 y=%2270%22 font-size=%2260%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-weight=%22900%22%3EQ%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="app.css">
+</head><body>
+<header class="top"><div class="wrap">
+  <div class="brand"><a href="index.html" class="logo" title="Torna al comparatore">←</a><div><h1>Comparatore Quote</h1><small>Genera multipla · confronto bookmaker</small></div></div>
+  <nav class="tabs"><a class="tab" href="index.html">Quote partite</a><a class="tab on" href="multipla.html">🧮 Genera multipla</a></nav>
+</div></header>
+<main class="wrap">
+  <section class="gm-intro"><h2>GENERA MULTIPLA</h2><p>Costruisci la tua combinazione e scopri quale bookmaker offre la quota totale più alta, usando sempre le quote dello stesso sito.</p></section>
+  <div class="gm-modes"><button class="gm-mode on" id="mode-multi">Multipla su più partite</button><button class="gm-mode" id="mode-same">Più selezioni sulla stessa partita</button></div>
+  <div class="gm-panel">
+    <div class="gm-grid">
+      <div class="gm-field"><label for="source">Fonte quote</label><select id="source"><option value="oddschecker">Oddschecker Italia</option><option value="oddspedia">Oddspedia Italia</option></select></div>
+      <div class="gm-field"><label for="match-search">Cerca la partita</label><input id="match-search" type="search" placeholder="Scrivi una squadra o una competizione…" autocomplete="off"></div>
+    </div>
+    <div id="match-suggestions" class="gm-suggestions"></div>
+    <div id="selected-match"></div>
+    <div class="gm-grid" style="margin-top:.7rem">
+      <div class="gm-field"><label for="market">Mercato</label><select id="market" disabled><option value="">Prima scegli una partita</option></select></div>
+      <div class="gm-field"><label for="outcome">Esito</label><select id="outcome" disabled><option value="">Scegli il mercato</option></select></div>
+    </div>
+    <div class="gm-actions"><button class="gm-btn" id="add-leg" disabled>＋ Aggiungi selezione</button><button class="gm-btn secondary" id="clear-all">Svuota multipla</button></div>
+    <div id="same-lock" class="gm-lock"></div>
+  </div>
+  <section class="gm-panel"><h3>Le tue selezioni <span id="leg-count" style="color:var(--mut);font-weight:400"></span></h3><div id="legs" class="gm-legs"><div class="empty">Non hai ancora aggiunto selezioni.</div></div></section>
+  <section class="gm-panel"><h3>Confronto quote totali</h3><div id="results"><div class="empty">Aggiungi almeno una selezione per confrontare i bookmaker.</div></div></section>
+  <p class="gm-note">Le quote mostrate sono quelle raccolte dall'ultima scansione disponibile e possono cambiare. Il bookmaker viene incluso solo se offre tutte le selezioni: le quote vengono moltiplicate tra loro. Nella modalità stessa partita, le combinazioni possono essere correlate e il bookmaker potrebbe applicare una quota speciale diversa dal semplice prodotto delle quote singole: verifica sempre la quota effettiva sul suo sito. 18+ · Il gioco può causare dipendenza patologica.</p>
+  <footer>Comparatore Quote · Quote indicative, da verificare sempre sul bookmaker.</footer>
+</main>
+<script src="multipla.js"></script>
+</body></html>
