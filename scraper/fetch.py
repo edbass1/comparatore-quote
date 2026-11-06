@@ -394,8 +394,8 @@ OP_LEGHE = [
     ("Montenegro Second League", "/it/calcio/montenegro/second-league"),
     ("North Macedonia First League", "/it/calcio/macedonia-del-nord/first-league"),
     ("North Macedonia Second League", "/it/calcio/macedonia-del-nord/second-league"),
-    ("Georgia Erovnuli Liga", "/it/calcio/georgia/erოვნuli-liga"),
-    ("Georgia Erovnuli Liga 2", "/it/calcio/georgia/erოვნuli-liga-2"),
+    ("Georgia Erovnuli Liga", "/it/calcio/georgia/erovnuli-liga"),
+    ("Georgia Erovnuli Liga 2", "/it/calcio/georgia/erovnuli-liga-2"),
     ("Armenia Premier League", "/it/calcio/armenia/premier-league"),
     ("Armenia First League", "/it/calcio/armenia/first-league"),
     ("Kosovo Superleague", "/it/calcio/kosovo/superleague"),
@@ -552,6 +552,14 @@ def scrape_oddspedia():
         except Exception as e:
             errori.append(f"{nome}: {e}"); log(f"[oddspedia] ERRORE {nome}: {e}")
         time.sleep(1)
+    # Limite globale: evita che l'ampliamento delle competizioni superi i tempi
+    # disponibili in GitHub Actions. Si prendono prima le partite più vicine,
+    # dopo aver raccolto gli incontri da tutti i campionati configurati.
+    jobs.sort(key=lambda job: job[1]["md"])
+    MAX_PARTITE_ODDSPEDIA = 260
+    if len(jobs) > MAX_PARTITE_ODDSPEDIA:
+        log(f"[oddspedia] Limite globale: {len(jobs)} partite trovate, ne elaboro le prime {MAX_PARTITE_ODDSPEDIA} per data")
+        jobs = jobs[:MAX_PARTITE_ODDSPEDIA]
     partite = []
     def run(job):
         try:
