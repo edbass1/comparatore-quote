@@ -15,6 +15,7 @@ function matchLabel(p) {
 }
 function setMode(next) {
   mode = next; legs = []; chosen = null; detail = null;
+  $("#match-search").disabled = false;
   modeMulti.classList.toggle("on", mode === "multi");
   modeSame.classList.toggle("on", mode === "same");
   $("#match-search").value = ""; $("#match-suggestions").innerHTML = "";
@@ -26,6 +27,7 @@ function setMode(next) {
 async function loadSource() {
   source = $("#source").value;
   chosen = null; detail = null; legs = []; cache.clear();
+  $("#match-search").disabled = false;
   $("#match-search").value = ""; $("#match-suggestions").innerHTML = ""; $("#selected-match").innerHTML = "";
   $("#market").disabled = true; $("#market").innerHTML = '<option value="">Caricamento partite…</option>';
   $("#outcome").disabled = true; $("#outcome").innerHTML = '<option value="">Scegli il mercato</option>';
@@ -67,7 +69,7 @@ async function chooseMatch(id) {
     detail = cache.get(id);
     marketItems = [];
     (detail.mercati || []).forEach((m, mi) => (m.s || []).forEach((s, si) => {
-      marketItems.push({mi:mi,si:si,market:m,selection:s,label:m.n + (s.l ? " · " + s.l : "") + " — " + s.n});
+      if (s.o && Object.keys(s.o).length) marketItems.push({mi:mi,si:si,market:m,selection:s,label:m.n + (s.l ? " · " + s.l : "") + " — " + s.n});
     }));
     const marketMap = [];
     marketItems.forEach(x => { if (!marketMap.some(y => y.mi === x.mi)) marketMap.push({mi:x.mi,n:x.market.n}); });
