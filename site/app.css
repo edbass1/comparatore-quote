@@ -111,3 +111,26 @@ footer{color:var(--mut);font-size:.78rem;padding:2rem 0 6rem;border-top:1px soli
 .gm-note{color:var(--mut);font-size:.78rem;margin:.65rem 0}
 .gm-lock{color:var(--warn);font-size:.82rem;margin:.4rem 0}
 @media(max-width:600px){.gm-grid{grid-template-columns:1fr}.gm-leg{grid-template-columns:1fr auto}.gm-panel{padding:.8rem}}
+
+/* ---------- schedina multipla rapida ---------- */
+.odds-pick{border:0;background:transparent;color:inherit;font:inherit;font-weight:inherit;cursor:pointer;padding:.12rem .2rem;border-radius:.35rem;min-width:2.2rem}
+.odds-pick:hover{outline:1px solid var(--acc);background:rgba(34,211,166,.12)}
+.odds-pick.picked{background:var(--acc);color:#001b14;font-weight:900}
+.quick-slip{position:fixed;right:1rem;bottom:1rem;width:min(390px,calc(100vw - 2rem));max-height:72vh;overflow:auto;z-index:60;background:#101419;border:1px solid var(--acc);border-radius:1rem;box-shadow:0 12px 45px rgba(0,0,0,.75);padding:.8rem}
+.qs-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.qs-head strong{font-size:1rem}.qs-head strong span{display:inline-grid;place-items:center;min-width:1.4rem;height:1.4rem;border-radius:50%;background:var(--acc);color:#001b14;font-size:.75rem;margin-left:.25rem}
+.qs-close,.qs-leg button{border:1px solid var(--line);background:var(--card2);color:var(--txt);border-radius:.5rem;padding:.25rem .55rem;cursor:pointer;font-size:1.1rem}
+.qs-empty,.qs-warning{font-size:.82rem;color:var(--mut);margin:.65rem 0}
+.qs-warning{color:var(--warn)}
+.qs-legs{display:grid;gap:.35rem;margin:.65rem 0;max-height:22vh;overflow:auto}
+.qs-leg{display:grid;grid-template-columns:1fr auto;gap:.4rem;align-items:center;padding:.45rem .55rem;border-radius:.6rem;background:var(--card2)}
+.qs-leg b,.qs-leg small{display:block}.qs-leg b{font-size:.82rem}.qs-leg small{font-size:.7rem;color:var(--mut)}
+.qs-caption{font-size:.72rem;color:var(--acc);font-weight:700;margin:.55rem 0 .3rem}
+.qs-rank{border-top:1px solid var(--line);padding-top:.3rem}
+.qs-book{display:grid;grid-template-columns:1fr auto;gap:.1rem .5rem;padding:.38rem .5rem;border-bottom:1px solid var(--line);font-size:.8rem}
+.qs-book strong{color:var(--best);font-size:.9rem}.qs-book small{grid-column:1/-1;color:var(--mut);font-size:.68rem}
+.qs-book.winner{background:rgba(34,211,166,.1);border-radius:.45rem}
+.qs-actions{display:flex;justify-content:space-between;gap:.5rem;align-items:center;margin-top:.65rem;font-size:.75rem}
+.qs-actions button{border:1px solid var(--line);background:var(--card2);color:var(--txt);border-radius:.5rem;padding:.4rem .55rem;cursor:pointer}
+.quick-slip.collapsed{width:auto;max-height:none;padding:.65rem}.quick-slip.collapsed>:not(.qs-head){display:none}
+@media(max-width:600px){.quick-slip{right:.5rem;bottom:.5rem;width:calc(100vw - 1rem);max-height:58vh}.qs-book{font-size:.78rem}}
