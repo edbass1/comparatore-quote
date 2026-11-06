@@ -2,8 +2,8 @@ name: Aggiorna quote
 
 on:
   schedule:
-    # ogni 30 minuti (orari UTC; GitHub può ritardare l'avvio di qualche minuto)
-    - cron: "7,37 * * * *"
+    # Ogni 30 minuti; la fascia viene filtrata usando l'ora italiana (Europe/Rome)
+    - cron: "0,30 * * * *"
   workflow_dispatch:          # avvio manuale: Actions > Aggiorna quote > Run workflow
   push:
     branches: [main]
@@ -29,12 +29,31 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+      - name: Verifica fascia oraria italiana
+        id: orario
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" != "schedule" ]; then
+            echo "attivo=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          ora=$(TZ=Europe/Rome date +%H)
+          if [ "$ora" -ge 8 ]; then
+            echo "attivo=true" >> "$GITHUB_OUTPUT"
+            echo "Aggiornamento consentito: sono le $(TZ=Europe/Rome date +'%H:%M') in Italia."
+          else
+            echo "attivo=false" >> "$GITHUB_OUTPUT"
+            echo "Fascia di pausa: sono le $(TZ=Europe/Rome date +'%H:%M') in Italia. Nessun aggiornamento."
+          fi
       - uses: actions/setup-python@v6
+        if: steps.orario.outputs.attivo == 'true'
         with:
           python-version: "3.12"
       - name: Installa dipendenze
+        if: steps.orario.outputs.attivo == 'true'
         run: pip install -r requirements.txt
       - name: Scarica quote (Oddschecker Italia + Oddspedia Italia)
+        if: steps.orario.outputs.attivo == 'true'
         env:
           PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
         run: |
@@ -43,12 +62,16 @@ jobs:
           python scraper/fetch.py --out site_out
           cp site_out/data/stato.json stato/ultimo-aggiornamento.json
       - uses: actions/configure-pages@v6
+        if: steps.orario.outputs.attivo == 'true'
       - uses: actions/upload-pages-artifact@v5
+        if: steps.orario.outputs.attivo == 'true'
         with:
           path: site_out
       - id: deployment
         uses: actions/deploy-pages@v5
+        if: steps.orario.outputs.attivo == 'true'
       - name: Commit stato (mantiene attiva la pianificazione)
+        if: steps.orario.outputs.attivo == 'true'
         run: |
           cp stato/ultimo-aggiornamento.json /tmp/stato.json
           git config user.name "github-actions[bot]"
