@@ -552,14 +552,23 @@ def scrape_oddspedia():
         except Exception as e:
             errori.append(f"{nome}: {e}"); log(f"[oddspedia] ERRORE {nome}: {e}")
         time.sleep(1)
-    # Limite globale: evita che l'ampliamento delle competizioni superi i tempi
-    # disponibili in GitHub Actions. Si prendono prima le partite più vicine,
-    # dopo aver raccolto gli incontri da tutti i campionati configurati.
-    jobs.sort(key=lambda job: job[1]["md"])
+    # Distribuzione equa: prima il primo incontro di ogni campionato,
+    # poi il secondo e così via. In questo modo il limite globale non privilegia
+    # soltanto le competizioni elencate per prime.
+    per_competizione = {}
+    for job in jobs:
+        per_competizione.setdefault(job[0], []).append(job)
+    jobs_equilibrati = []
+    for indice in range(MAX_PER_LEGA):
+        for nome, _ in OP_LEGHE:
+            elenco = per_competizione.get(nome, [])
+            if indice < len(elenco):
+                jobs_equilibrati.append(elenco[indice])
     MAX_PARTITE_ODDSPEDIA = 260
-    if len(jobs) > MAX_PARTITE_ODDSPEDIA:
-        log(f"[oddspedia] Limite globale: {len(jobs)} partite trovate, ne elaboro le prime {MAX_PARTITE_ODDSPEDIA} per data")
-        jobs = jobs[:MAX_PARTITE_ODDSPEDIA]
+    if len(jobs_equilibrati) > MAX_PARTITE_ODDSPEDIA:
+        log(f"[oddspedia] Limite globale: {len(jobs_equilibrati)} partite trovate; selezione distribuita su tutti i campionati, massimo {MAX_PARTITE_ODDSPEDIA}")
+        jobs_equilibrati = jobs_equilibrati[:MAX_PARTITE_ODDSPEDIA]
+    jobs = jobs_equilibrati
     partite = []
     def run(job):
         try:
