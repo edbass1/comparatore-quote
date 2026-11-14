@@ -38,6 +38,10 @@ function setupFab() {
 function statoHTML(st, fonte) {
   if (!st) return `<div class="status ko">⚠️ Stato della fonte sconosciuto.</div>`;
   const link = `<a href="${esc(FONTI[fonte].sito)}" target="_blank" rel="noopener">${esc(st.nome || FONTI[fonte].nome)}</a>`;
+  if (st.ok && !st.n_partite) {
+    const g = st.finestra_giorni ? ` nei prossimi ${st.finestra_giorni} giorni` : "";
+    return `<div class="status ok">✅ ${link} · aggiornato alle <b>${fmtOra(st.aggiornato_ok || st.aggiornato)}</b> · nessuna partita in programma${g}.</div>`;
+  }
   if (st.ok) return `<div class="status ok">✅ ${link} · aggiornato alle <b>${fmtOra(st.aggiornato_ok)}</b> (ora italiana) · ${st.n_partite} partite${st.n_errori ? ` · ${st.n_errori} pagine non lette` : ""}</div>`;
   if (st.vecchi) return `<div class="status old">⚠️ ${link} non ha risposto all'ultimo aggiornamento (${fmtOra(st.aggiornato)}). Mostro i dati dell'aggiornamento precedente delle <b>${fmtOra(st.aggiornato_ok)}</b>: le quote potrebbero essere cambiate.</div>`;
   return `<div class="status ko">⛔ ${link} <b>non disponibile</b> in questo momento (tentativo delle ${fmtOra(st.aggiornato)} ora italiana). Nessuna quota mostrata per questa fonte.${st.errori && st.errori.length ? `<br><small>${esc(st.errori[0])}</small>` : ""}</div>`;
@@ -86,18 +90,46 @@ function setupMultiplaRapida(d, fonte, id) {
 }
 
 /* ===================================================== HOME ===================================================== */
+function futura(iso) { return new Date(iso) > Date.now() - 5 * 60e3; }
+function quoteTesto(quote) { return (quote || []).map(q => esc(q.n) + " " + q2(q.q)).join(" · "); }
+function apriScheda(html) {
+  const back = document.createElement("div");
+  back.className = "sheet-back";
+  back.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><button type="button" class="sheet-x" aria-label="Chiudi">✕</button>${html}</div>`;
+  document.body.appendChild(back);
+  const close = () => { back.remove(); document.removeEventListener("keydown", escK); };
+  const escK = e => { if (e.key === "Escape") close(); };
+  back.addEventListener("click", e => { if (e.target === back) close(); });
+  back.querySelector(".sheet-x").onclick = close;
+  document.addEventListener("keydown", escK);
+  back.querySelector(".sheet").focus?.();
+}
+
 async function home() {
   setupFab();
   let fonte = FONTI[qs.get("f")] ? qs.get("f") : (localStorage.getItem("cq_fonte") || "oddschecker");
   if (!FONTI[fonte] && fonte !== "info") fonte = "oddschecker";
-  const tabs = $("#tabs"), main = $("#main");
-  const cache = {};
+  let vista = ["rating", "updown"].includes(qs.get("v")) ? qs.get("v") : "quote";
+  const tabs = $("#tabs"), views = $("#views"), main = $("#main");
+  const cache = {}, extra = {};
   let compSel = "";
 
+  function urlVista() {
+    return "?f=" + fonte + (vista === "quote" || fonte === "info" ? "" : "&v=" + vista);
+  }
   function drawTabs() {
     tabs.innerHTML = Object.entries(FONTI).map(([k, v]) => `<button class="tab ${k === fonte ? "on" : ""}" data-f="${k}">${v.nome}</button>`).join("") +
       `<button class="tab ${fonte === "info" ? "on" : ""}" data-f="info">ℹ️ Fonti</button>` + `<button class="tab" data-go="multipla">🧮 Genera multipla</button>`;
-    tabs.querySelectorAll(".tab").forEach(b => b.onclick = () => { if (b.dataset.go === "multipla") { location.href = "multipla.html"; return; } fonte = b.dataset.f; compSel = ""; if (fonte !== "info") localStorage.setItem("cq_fonte", fonte); history.replaceState(null, "", "?f=" + fonte); $("#q").value = ""; load(); });
+    tabs.querySelectorAll(".tab").forEach(b => b.onclick = () => { if (b.dataset.go === "multipla") { location.href = "multipla.html"; return; } fonte = b.dataset.f; compSel = ""; if (fonte !== "info") localStorage.setItem("cq_fonte", fonte); history.replaceState(null, "", urlVista()); $("#q").value = ""; load(); });
+    if (!views) return;
+    const voci = [["quote", "Quote"], ["rating", "Classifica rating"], ["updown", "UP / DOWN"]];
+    views.innerHTML = voci.map(([k, lab]) => `<button class="tab ${fonte !== "info" && vista === k ? "on" : ""}" data-v="${k}">${lab}</button>`).join("");
+    views.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+      vista = b.dataset.v;
+      if (fonte === "info") { fonte = FONTI[localStorage.getItem("cq_fonte")] ? localStorage.getItem("cq_fonte") : "oddspedia"; }
+      history.replaceState(null, "", urlVista());
+      load();
+    });
   }
 
   async function info() {
@@ -105,15 +137,105 @@ async function home() {
     try { st = await getJSON("data/stato.json"); } catch (e) {}
     main.innerHTML = `<div class="src">` + Object.keys(FONTI).map(k => statoHTML((st.fonti || {})[k], k)).join("") + `</div>
       <div class="status"><b>Come funziona</b><br>Le quote vengono lette automaticamente ogni 30 minuti da GitHub Actions dalle versioni <b>italiane</b> dei comparatori (solo bookmaker con concessione ADM mostrati agli utenti italiani) e pubblicate qui. Nessuna quota è inventata: se una fonte non risponde viene indicata come non disponibile.<br><br>
-      <b>Oddschecker Italia</b> (oddschecker.com/it): tutti i mercati della partita, ~20–25 bookmaker italiani.<br>
+      <b>Oddschecker Italia</b> (oddschecker.com/it): tutti i mercati della partita, ~20–25 bookmaker italiani. Finestra più lunga (circa due settimane) perché questi campionati hanno stacchi senza partite.<br>
       <b>Oddspedia Italia</b> (oddspedia.com/it): mercati principali, bookmaker italiani filtrati da Oddspedia (di solito 5–8).<br><br>
+      <b>Classifica rating</b>: per ogni bookmaker, le 30 partite col mercato dal payout più alto (solo quote di quel bookmaker, esiti completi). <b>UP / DOWN</b>: i 30 movimenti più forti su 1X2 e Over/Under 2.5 nelle ultime 24 ore. Lo storico parte da zero al primo aggiornamento dopo questa versione e si riempie nel giorno successivo.<br><br>
       Le quote possono cambiare in qualsiasi momento: verifica sempre sul sito del bookmaker prima di giocare. Gioco vietato ai minori di 18 anni. Il gioco può causare dipendenza.</div>`;
     $("#comps").innerHTML = "";
   }
 
+  function chromeVista() {
+    const ricerca = document.querySelector(".search");
+    if (ricerca) ricerca.style.display = vista === "quote" ? "" : "none";
+    if (vista !== "quote" && $("#comps")) $("#comps").innerHTML = "";
+  }
+
+  async function vistaRating() {
+    chromeVista();
+    main.innerHTML = `<div class="empty">Caricamento classifica…</div>`;
+    let rat, idx;
+    try {
+      [rat, idx] = await Promise.all([
+        extra[fonte + ":rating"] || getJSON(`data/${fonte}/rating.json`),
+        getJSON(`data/${fonte}/index.json`).catch(() => null),
+      ]);
+      extra[fonte + ":rating"] = rat;
+    } catch (e) {
+      main.innerHTML = `<div class="plain-view"><h2>Classifica rating</h2><p class="lead">La classifica non è ancora pubblicata. Compare al prossimo aggiornamento automatico (ogni 30 minuti, dalle 8 alle 24 ora italiana).</p></div>`;
+      return;
+    }
+    const books = (rat.bookmaker || []).filter(b => (b.righe || []).some(r => futura(r.inizio)));
+    let bk = books.find(b => b.id === extra.bk) ? extra.bk : (books[0] && books[0].id);
+    const disegna = () => {
+      extra.bk = bk;
+      const book = books.find(b => b.id === bk);
+      const righe = ((book && book.righe) || []).filter(r => futura(r.inizio));
+      let h = `<div class="plain-view"><h2>Classifica rating</h2>`;
+      h += idx ? statoHTML(idx.stato, fonte) : "";
+      h += `<p class="lead">Per ogni bookmaker, le 30 partite con il mercato dal payout più alto. Il rating è 100 diviso la somma di 1/quota di tutti gli esiti, usando solo le quote di quel bookmaker. Stessa partita una sola volta: clicca la riga per gli altri mercati.</p>`;
+      if (!books.length) {
+        h += `<p class="lead">Nessun mercato completo in questo momento.</p></div>`;
+        main.innerHTML = h;
+        return;
+      }
+      h += `<label class="lead" for="bk-sel">Bookmaker</label><select id="bk-sel" class="bk-sel">${books.map(b => `<option value="${esc(b.id)}"${b.id === bk ? " selected" : ""}>${esc(b.n)} (${(b.righe || []).filter(r => futura(r.inizio)).length})</option>`).join("")}</select>`;
+      h += `<div class="rank">` + righe.map((r, i) => `<button type="button" class="rank-row" data-i="${i}"><div class="rank-pos">${i + 1}</div><div class="rank-pct">${Number(r.rating).toFixed(1)}%</div><div class="rank-ev">${esc(r.casa)} – ${esc(r.ospite)}</div><div class="rank-meta">${esc(fmtDT(r.inizio))}${r.comp ? " · " + esc(r.comp) : ""}</div><div class="rank-meta">${esc(r.mercato)}</div><div class="rank-odds">${quoteTesto(r.quote)}</div></button>`).join("") + `</div></div>`;
+      main.innerHTML = h;
+      $("#bk-sel").onchange = () => { bk = $("#bk-sel").value; disegna(); };
+      main.querySelectorAll(".rank-row").forEach(btn => btn.onclick = () => {
+        const r = righe[+btn.dataset.i];
+        const altri = r.altri || [];
+        const corpo = `<h3>${esc(r.casa)} – ${esc(r.ospite)}</h3><p class="rank-meta">${esc(fmtDT(r.inizio))}${r.comp ? " · " + esc(r.comp) : ""} · ${esc(book.n)}</p><p class="lead">In classifica: ${esc(r.mercato)} · ${Number(r.rating).toFixed(1)}% · ${quoteTesto(r.quote)}</p>` +
+          (altri.length ? `<h3>Altri mercati</h3><div class="rank">` + altri.map(a => `<div class="rank-row static"><div class="rank-pct">${Number(a.rating).toFixed(1)}%</div><div class="rank-meta">${esc(a.mercato)}</div><div class="rank-odds">${quoteTesto(a.quote)}</div></div>`).join("") + `</div>` : `<p class="lead">Nessun altro mercato completo per questo bookmaker.</p>`) +
+          `<p class="rank-meta"><a href="partita.html?f=${fonte}&id=${encodeURIComponent(r.id)}">Apri il confronto quote</a></p>`;
+        apriScheda(corpo);
+      });
+    };
+    disegna();
+  }
+
+  async function vistaUpdown() {
+    chromeVista();
+    main.innerHTML = `<div class="empty">Caricamento movimenti…</div>`;
+    let mov, idx;
+    try {
+      [mov, idx] = await Promise.all([
+        extra.mov || getJSON("data/movimenti.json"),
+        getJSON(`data/${fonte}/index.json`).catch(() => null),
+      ]);
+      extra.mov = mov;
+    } catch (e) {
+      main.innerHTML = `<div class="plain-view"><h2>UP / DOWN</h2><p class="lead">I movimenti non sono ancora pubblicati. Il raccoglitore tiene uno storico di 24 ore a partire dal prossimo aggiornamento.</p></div>`;
+      return;
+    }
+    const tutte = (((mov.fonti || {})[fonte]) || []).filter(r => futura(r.inizio));
+    const ore = Number(mov.ore || 0);
+    let nota;
+    if ((mov.n_snap || 0) < 2) nota = "Ancora nessuno storico utile: serve almeno un secondo passaggio del raccoglitore (circa 30 minuti, tra le 8 e le 24 ora italiana). Poi i movimenti crescono fino a coprire 24 ore.";
+    else nota = `Finestra considerata: ${ore} ore` + (mov.da ? ` (dal ${fmtDT(mov.da)} al ${fmtDT(mov.a)})` : "") + "." + (ore < 20 ? " Lo storico si sta ancora costruendo: la sezione si completa dopo circa 24 ore di aggiornamenti." : "");
+    let h = `<div class="plain-view"><h2>UP / DOWN</h2>`;
+    h += idx ? statoHTML(idx.stato, fonte) : "";
+    h += `<p class="lead">I 30 movimenti di quota più forti su 1X2 e Over/Under 2.5. Una partita compare una sola volta, col movimento più ampio; clicca la riga per gli altri. ${esc(nota)}</p>`;
+    if (!tutte.length) h += `<p class="lead">Nessun movimento da mostrare in questa finestra.</p>`;
+    h += `<div class="rank">` + tutte.map((r, i) => `<button type="button" class="rank-row" data-i="${i}"><div class="rank-pos">${i + 1} ${esc(r.dir)}</div><div class="rank-pct">${r.var > 0 ? "+" : ""}${Number(r.var).toFixed(1)}%</div><div class="rank-odds">${q2(r.da_q)} → ${q2(r.a_q)}</div><div class="rank-ev">${esc(r.casa)} – ${esc(r.ospite)}</div><div class="rank-meta">${esc(fmtDT(r.inizio))}${r.comp ? " · " + esc(r.comp) : ""}</div><div class="rank-meta">${esc(r.tipo)} · ${esc(r.esito)} · ${esc(r.bk)}</div><div class="rank-meta">rilevato ${esc(fmtDT(r.quando))}</div></button>`).join("") + `</div></div>`;
+    main.innerHTML = h;
+    main.querySelectorAll(".rank-row").forEach(btn => btn.onclick = () => {
+      const r = tutte[+btn.dataset.i];
+      const altri = r.altri || [];
+      const rigaMov = m => `<div class="rank-row static"><div class="rank-pos">${esc(m.dir)} ${m.var > 0 ? "+" : ""}${Number(m.var).toFixed(1)}%</div><div class="rank-odds">${q2(m.da_q)} → ${q2(m.a_q)}</div><div class="rank-meta">${esc(m.tipo)} · ${esc(m.esito)} · ${esc(m.bk)}</div><div class="rank-meta">rilevato ${esc(fmtDT(m.quando))}</div></div>`;
+      const corpo = `<h3>${esc(r.casa)} – ${esc(r.ospite)}</h3><p class="rank-meta">${esc(fmtDT(r.inizio))}${r.comp ? " · " + esc(r.comp) : ""}</p><p class="lead">Movimento in classifica</p>${rigaMov(r)}` +
+        (altri.length ? `<h3>Altri movimenti</h3><div class="rank">` + altri.map(rigaMov).join("") + `</div>` : `<p class="lead">Nessun altro movimento su 1X2 e Over/Under 2.5.</p>`) +
+        `<p class="rank-meta"><a href="partita.html?f=${fonte}&id=${encodeURIComponent(r.id)}">Apri il confronto quote</a></p>`;
+      apriScheda(corpo);
+    });
+  }
+
   async function load() {
     drawTabs();
+    chromeVista();
     if (fonte === "info") return info();
+    if (vista === "rating") return vistaRating();
+    if (vista === "updown") return vistaUpdown();
     main.innerHTML = `<div class="empty">Caricamento quote…</div>`;
     try { cache[fonte] = cache[fonte] || await getJSON(`data/${fonte}/index.json`); }
     catch (e) { main.innerHTML = statoHTML({ nome: FONTI[fonte].nome, ok: false, aggiornato: new Date(), errori: ["Dati non ancora pubblicati"] }, fonte); return; }
@@ -153,7 +275,7 @@ async function home() {
     sug.style.display = "block";
     sug.querySelectorAll("button[data-id]").forEach(b => b.onclick = () => location.href = `partita.html?f=${fonte}&id=${encodeURIComponent(b.dataset.id)}`);
   }
-  inp.addEventListener("input", () => { suggest(); draw(); });
+  inp.addEventListener("input", () => { if (vista !== "quote") return; suggest(); draw(); });
   inp.addEventListener("keydown", e => {
     const bs = [...sug.querySelectorAll("button[data-id]")]; if (!bs.length) return;
     if (e.key === "ArrowDown") { act = Math.min(bs.length - 1, act + 1); e.preventDefault(); }

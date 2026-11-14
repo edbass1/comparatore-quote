@@ -9,10 +9,16 @@ import argparse, html, json, os, re, subprocess, sys, tempfile, time, traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from curl_cffi import requests as creq
+from classifiche import calcola_rating, estrai_quote_movimento, pubblica_movimenti
 
 NOW = datetime.now(timezone.utc)
-GIORNI_AVANTI = 6          # partite entro i prossimi N giorni
-MAX_PER_LEGA = 14          # limite di sicurezza per lega
+GIORNI_AVANTI = 6          # Oddspedia: partite entro i prossimi N giorni
+# Oddschecker segue solo i grandi campionati: nello stacco per le nazionali
+# il turno successivo cade spesso oltre i 6 giorni, e il sito restava vuoto
+# anche se l'API rispondeva. 13 giorni copre il weekend e la settimana di coppe.
+OC_GIORNI = 13
+OC_MAX = 24                # un turno intero (il tetto globale da 14 tagliava la Serie A)
+MAX_PER_LEGA = 14          # limite di sicurezza per lega (Oddspedia)
 PAGES_URL = os.environ.get("PAGES_URL", "https://edbass1.github.io/comparatore-quote")
 STALE_MAX_ORE = 6          # oltre questo i dati vecchi non si mostrano più
 
@@ -27,8 +33,9 @@ def parse_dt(s):
     if s.endswith("Z"): s = s[:-1] + "+00:00"
     return datetime.fromisoformat(s)
 
-def in_finestra(dt):
-    return NOW - timedelta(minutes=5) < dt < NOW + timedelta(days=GIORNI_AVANTI)
+def in_finestra(dt, giorni=None):
+    g = GIORNI_AVANTI if giorni is None else giorni
+    return NOW - timedelta(minutes=5) < dt < NOW + timedelta(days=g)
 
 def session():
     s = creq.Session(impersonate="chrome")
@@ -93,7 +100,9 @@ OC_LEGHE = [
     ("Serie B", 9952, "/it/calcio/italia/serie-b"),
     ("Champions League", 218309, "/it/calcio/coppe-e-amichevoli-per-club/champions-league"),
     ("Europa League", 10545, "/it/calcio/coppe-e-amichevoli-per-club/europa-league"),
-    ("Conference League", 38925767, "/it/calcio/coppe-e-amichevoli-per-club/conference-league"),
+    # L'id storico 38925767 risponde 404; la pagina è stata rinominata.
+    # Se l'HTML è raggiungibile, l'id nuovo si legge dalla pagina (vedi oc_lega).
+    ("Conference League", 38925767, "/it/calcio/coppe-e-amichevoli-per-club/uefa-europa-conference-league"),
     ("Premier League", 2457, "/it/calcio/inghilterra/premier-league"),
     ("LaLiga", 9945, "/it/calcio/spagna/liga"),
     ("Bundesliga", 9935, "/it/calcio/germania/bundesliga"),
@@ -186,9 +195,10 @@ def oc_norm_sels(name, sels, hn, an):
     elif set(labs) <= {"Sì", "No"}:
         sels.sort(key=lambda x: 0 if x["n"] == "Sì" else 1)
 
-def oc_lega(s, comp, event_id, path):
+def oc_lega(s, comp, event_id, _path):
     """Usa l'API JSON pubblica che la pagina di lega di Oddschecker Italia chiama nel browser
-    (/api/cx/sports-catalogue/v1/subevent-group), a blocchi di tipi di scommessa."""
+    (/api/cx/sports-catalogue/v1/subevent-group), a blocchi di tipi di scommessa.
+    L'HTML non va richiesto: sui runner è dietro Cloudflare e un 403 può far cadere anche l'API."""
     bts = sorted(OC_MERCATI, key=lambda b: OC_MERCATI[b].get("p", 9999))
     subs = {}
     for i in range(0, len(bts), OC_CHUNK):
@@ -200,16 +210,16 @@ def oc_lega(s, comp, event_id, path):
             log(f"[oddschecker] {comp} blocco {i}: {e}"); continue
         if r.status_code == 404 and i > 0: continue
         if r.status_code != 200:
-            if i == 0: raise RuntimeError(f"HTTP {r.status_code}")
+            if i == 0: raise RuntimeError(f"HTTP {r.status_code} (eventId {event_id})")
             log(f"[oddschecker] {comp} blocco {i}: HTTP {r.status_code}"); continue
         for se in (r.json() or {}).get("subevents") or []:
             if se.get("type") != "MATCH" or se.get("inRunning"): continue
-            if not in_finestra(parse_dt(se["startTime"])): continue
+            if not in_finestra(parse_dt(se["startTime"]), OC_GIORNI): continue
             cur = subs.setdefault(se["id"], dict(se, markets=[]))
             cur["markets"] += se.get("markets") or []
         time.sleep(0.4)
     out = []
-    for se in sorted(subs.values(), key=lambda x: x["startTime"])[:MAX_PER_LEGA]:
+    for se in sorted(subs.values(), key=lambda x: x["startTime"])[:OC_MAX]:
         p = oc_build(comp, se)
         if p["mercati"]: out.append(p)
     return out
@@ -252,15 +262,17 @@ def oc_build(comp, se):
 def scrape_oddschecker():
     s = session()
     partite, errori = [], []
+    leghe_ok = 0
     for comp, ev, path in OC_LEGHE:
         try:
             ps = oc_lega(s, comp, ev, path)
+            leghe_ok += 1
             log(f"[oddschecker] {comp}: {len(ps)} partite")
             partite += ps
         except Exception as e:
             errori.append(f"{comp}: {e}"); log(f"[oddschecker] ERRORE {comp}: {e}")
         time.sleep(0.5)
-    return partite, errori
+    return partite, errori, {"leghe_ok": leghe_ok, "leghe": len(OC_LEGHE), "finestra_giorni": OC_GIORNI}
 
 # --------------------------------------------------------------------------------------
 # ODDSPEDIA ITALIA  (https://oddspedia.com/it/)
@@ -543,10 +555,11 @@ def op_partita(s, comp, m):
 def scrape_oddspedia():
     s = session()
     get(s, OP + "/it/calcio")
-    jobs, errori = [], []
+    jobs, errori, leghe_ok = [], [], 0
     for nome, path in OP_LEGHE:
         try:
             ms = op_partite_lega(s, nome, path)
+            leghe_ok += 1
             log(f"[oddspedia] {nome}: {len(ms)} partite")
             jobs += [(nome, m) for m in ms]
         except Exception as e:
@@ -578,7 +591,7 @@ def scrape_oddspedia():
     with ThreadPoolExecutor(2) as ex:
         for r in ex.map(run, jobs):
             if r and r["mercati"]: partite.append(r)
-    return partite, errori
+    return partite, errori, {"leghe_ok": leghe_ok, "leghe": len(OP_LEGHE), "finestra_giorni": GIORNI_AVANTI}
 
 # --------------------------------------------------------------------------------------
 FONTI = {
@@ -602,6 +615,11 @@ def scrivi(out, fonte, partite, stato):
     idx.sort(key=lambda x: (x["inizio"], x["comp"]))
     with open(os.path.join(d, "index.json"), "w") as f:
         json.dump({"stato": stato, "partite": idx}, f, ensure_ascii=False, separators=(",", ":"))
+    try:
+        with open(os.path.join(d, "rating.json"), "w") as f:
+            json.dump(calcola_rating(partite), f, ensure_ascii=False, separators=(",", ":"))
+    except Exception as e:
+        log(f"[{fonte}] classifica rating non scritta: {e}")
 
 def fallback(out, fonte, stato):
     """Riusa i dati pubblicati dall'esecuzione precedente (se recenti), segnalandoli come non aggiornati."""
@@ -630,23 +648,47 @@ def main():
     ap.add_argument("--solo", choices=list(FONTI))
     a = ap.parse_args()
     riepilogo = {"generato": iso(NOW), "fonti": {}}
+    quote_nuove = []
     for fonte, (nome, url, fn) in FONTI.items():
         if a.solo and fonte != a.solo: continue
         t0 = time.time()
         stato = {"nome": nome, "url": url, "aggiornato": iso(NOW)}
+        info = {}
         try:
-            partite, errori = fn()
+            result = fn()
+            partite, errori = result[0], result[1]
+            info = result[2] if len(result) > 2 else {}
         except Exception as e:
             traceback.print_exc(); partite, errori = [], [str(e)]
+        if info.get("finestra_giorni"):
+            stato["finestra_giorni"] = info["finestra_giorni"]
         stato.update({"durata_s": round(time.time() - t0), "errori": errori[:20], "n_errori": len(errori), "n_partite": len(partite)})
+        fresco = False
         if partite:
             stato.update({"ok": True, "aggiornato_ok": iso(datetime.now(timezone.utc))})
             scrivi(a.out, fonte, partite, stato)
+            fresco = True
+        elif info.get("leghe_ok", 0) > 0:
+            # L'API ha risposto: il calendario è vuoto, la fonte non è guasta.
+            stato.update({"ok": True, "vuoto": True, "aggiornato_ok": iso(datetime.now(timezone.utc))})
+            scrivi(a.out, fonte, [], stato)
+            fresco = True
         elif not fallback(a.out, fonte, stato):
             stato.update({"ok": False})
             scrivi(a.out, fonte, [], stato)
-        riepilogo["fonti"][fonte] = {k: stato.get(k) for k in ("nome", "ok", "vecchi", "n_partite", "n_errori", "aggiornato_ok", "durata_s")}
+        if fresco and partite:
+            try:
+                quote_nuove += estrai_quote_movimento(partite, fonte)
+            except Exception as e:
+                log(f"[{fonte}] quote per lo storico non estratte: {e}")
+        riepilogo["fonti"][fonte] = {k: stato.get(k) for k in ("nome", "ok", "vecchi", "vuoto", "n_partite", "n_errori", "aggiornato_ok", "durata_s", "finestra_giorni")}
         log(f"== {fonte}: ok={stato.get('ok')} partite={len(partite)} errori={len(errori)} in {stato['durata_s']}s")
+    try:
+        mov, st = pubblica_movimenti(a.out, quote_nuove)
+        log(f"[storico] snapshot={mov.get('n_snap')} ore={mov.get('ore')} quote={len(st.get('q') or {})}")
+    except Exception as e:
+        log(f"[storico] non aggiornato: {e}")
+        traceback.print_exc()
     os.makedirs(os.path.join(a.out, "data"), exist_ok=True)
     with open(os.path.join(a.out, "data", "stato.json"), "w") as f:
         json.dump(riepilogo, f, ensure_ascii=False, indent=1)

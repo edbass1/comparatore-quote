@@ -9,9 +9,16 @@ prese dalle versioni **italiane** di:
 Sito: https://edbass1.github.io/comparatore-quote/
 
 ## Funzioni
-- Home: partite dei prossimi 6 giorni raggruppate per giorno e competizione (Serie A, Serie B, Coppa Italia,
+- Home: partite raggruppate per giorno e competizione (Serie A, Serie B, Coppa Italia,
   Champions, Europa e Conference League, Premier League, LaLiga, Bundesliga, Ligue 1, Eredivisie),
   ricerca squadra con suggerimenti, filtro per competizione, migliori quote 1X2.
+  Oddspedia guarda i prossimi 6 giorni; Oddschecker i prossimi 13, così il turno successivo
+  resta visibile nello stacco per le nazionali.
+- **Classifica rating**: per ogni bookmaker, le 30 partite col mercato dal payout più alto
+  (solo le sue quote, solo esiti completi). Clic sulla riga per gli altri mercati della partita.
+- **UP / DOWN**: i 30 movimenti di quota più forti su 1X2 e Over/Under 2.5 nelle ultime 24 ore.
+  Lo storico (`stato/storico-quote.json`) si accumula a ogni aggiornamento e la sezione si riempie
+  dopo circa un giorno.
 - Pagina partita: tabella quote per bookmaker con la **quota migliore evidenziata**, ricerca del tipo di scommessa,
   menu a tendina con tutti i mercati e pulsanti rapidi (1X2, Doppia chance, U/O 0.5–4.5, Goal/NoGoal,
   Risultato esatto, Primo/Secondo tempo, Parziale/Finale, Handicap, DNB, Combo, Marcatori, Corner, Cartellini…).
