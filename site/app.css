@@ -70,6 +70,28 @@ td.best .bn{color:#333}
 .fab button:active{transform:scale(.94)}
 .fab #su{background:var(--acc);color:#000;display:none}
 footer{color:var(--mut);font-size:.78rem;padding:2rem 0 6rem;border-top:1px solid var(--line);margin-top:2rem}
+
+/* Classifica rating e UP / DOWN: testo bianco grande, nessuno evidenziatore colorato */
+.plain-view{color:#fff}
+.plain-view h2{margin:1rem 0 .45rem;font-size:1.7rem;font-weight:700;color:#fff;letter-spacing:0}
+.plain-view .lead{color:#fff;font-size:1.08rem;line-height:1.45;margin:.35rem 0 .9rem}
+.plain-view .status{color:#fff;background:#000;border-color:#444}
+.bk-sel{display:block;width:100%;max-width:28rem;margin:0 0 1rem;padding:.75rem .8rem;font-size:1.15rem;color:#fff;background:#000;border:1px solid #fff;border-radius:.6rem}
+.rank{display:grid;gap:.65rem}
+.rank-row{display:block;width:100%;text-align:left;color:#fff;background:#000;border:1px solid #3a3a3a;border-radius:.75rem;padding:.9rem 1rem;font:inherit;line-height:1.35;cursor:pointer}
+.rank-row.static{cursor:default}
+.rank-row:hover,.rank-row:focus{border-color:#fff;outline:none}
+.rank-row.static:hover{border-color:#3a3a3a}
+.rank-pos{font-size:1.35rem;font-weight:750}
+.rank-pct{font-size:1.6rem;font-weight:750;margin:.1rem 0}
+.rank-ev{font-size:1.25rem;font-weight:650}
+.rank-meta{font-size:1.05rem;margin-top:.15rem}
+.rank-odds{font-size:1.15rem;margin-top:.35rem}
+.sheet-back{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.82);display:flex;align-items:flex-end;justify-content:center}
+.sheet{position:relative;width:min(760px,100%);max-height:88vh;overflow:auto;background:#000;color:#fff;border:1px solid #fff;border-radius:1rem 1rem 0 0;padding:1.2rem 1.1rem 2.2rem}
+.sheet h3{margin:.2rem 0 .6rem;font-size:1.45rem;font-weight:700;color:#fff}
+.sheet-x{position:sticky;top:0;float:right;border:1px solid #fff;background:#000;color:#fff;font-size:1.3rem;width:2.4rem;height:2.4rem;border-radius:.5rem;cursor:pointer}
+@media(min-width:700px){.sheet-back{align-items:center}.sheet{border-radius:1rem;max-height:82vh}}
 .hint{color:var(--mut);font-size:.8rem}
 .src{display:grid;gap:.6rem}
 .src .status b{color:var(--txt)}
