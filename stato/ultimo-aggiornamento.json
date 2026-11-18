@@ -1,15 +1,15 @@
 {
- "generato": "2026-11-18T10:28:38Z",
+ "generato": "2026-11-18T18:59:00Z",
  "fonti": {
   "oddschecker": {
    "nome": "Oddschecker Italia",
    "ok": true,
    "vecchi": null,
    "vuoto": null,
-   "n_partite": 158,
-   "n_errori": 1,
-   "aggiornato_ok": "2026-11-18T10:29:41Z",
-   "durata_s": 64,
+   "n_partite": 178,
+   "n_errori": 0,
+   "aggiornato_ok": "2026-11-18T19:00:26Z",
+   "durata_s": 86,
    "finestra_giorni": 13
   },
   "oddspedia": {
