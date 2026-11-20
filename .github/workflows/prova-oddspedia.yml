@@ -1,0 +1,34 @@
+name: Prova Oddspedia
+
+# Verifica sul runner GitHub che l'API JSON di Oddspedia non prenda il 403
+# dell'HTML. Non pubblica il sito.
+on:
+  workflow_dispatch:
+  push:
+    branches: [cursor/oddspedia-json-030b]
+
+permissions:
+  contents: read
+
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Installa dipendenze
+        run: pip install -r requirements.txt
+      - name: Scarica solo Oddspedia
+        run: |
+          mkdir -p site_out
+          python scraper/fetch.py --out site_out --solo oddspedia
+          python -c 'import json,sys; st=json.load(open("site_out/data/stato.json")); op=st["fonti"]["oddspedia"]; idx=json.load(open("site_out/data/oddspedia/index.json")); err=(idx.get("stato") or {}).get("errori") or []; print(json.dumps({"ok":op.get("ok"),"n_partite":op.get("n_partite"),"n_errori":op.get("n_errori"),"errori":err[:5]}, ensure_ascii=False)); sys.exit(0 if op.get("ok") and op.get("n_partite") else 1)'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oddspedia-prova
+          path: site_out/data/oddspedia/index.json
+          if-no-files-found: warn
