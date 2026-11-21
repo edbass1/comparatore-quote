@@ -5,9 +5,9 @@ e scrive JSON statici in <out>/data/<fonte>/.
 Nessuna quota viene inventata: se una fonte non risponde viene marcata come "non disponibile"
 (o, se presente, si riusano i dati dell'esecuzione precedente segnalandoli come NON aggiornati).
 """
-import argparse, html, json, os, re, subprocess, sys, tempfile, time, traceback
-from concurrent.futures import ThreadPoolExecutor
+import argparse, html, json, os, re, shutil, subprocess, sys, time, traceback
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlencode
 from curl_cffi import requests as creq
 from classifiche import calcola_rating, estrai_quote_movimento, pubblica_movimenti
 
@@ -276,8 +276,10 @@ def scrape_oddschecker():
 
 # --------------------------------------------------------------------------------------
 # ODDSPEDIA ITALIA  (https://oddspedia.com/it/)
-# Lista partite: stato Nuxt della pagina di lega.  Quote: API JSON pubblica usata dal sito
-# (getMatchOdds) con bookmakerGeoCode=IT => solo bookmaker mostrati agli utenti italiani.
+# Lista partite e quote: API JSON della pagina (getLeagueInfo, getMatchList, getMatchOdds).
+# Sugli IP dei runner GitHub anche l'API è un challenge Cloudflare, e il cookie di
+# clearance non vale per curl_cffi: le chiamate passano da fetch() dentro Chrome.
+# getMatchOdds usa bookmakerGeoCode=IT => solo bookmaker mostrati agli utenti italiani.
 # --------------------------------------------------------------------------------------
 OP = "https://oddspedia.com"
 OP_LEGHE = [
@@ -445,26 +447,194 @@ OP_LEGHE = [
 # id gruppo mercato Oddspedia, in ordine di importanza
 OP_GRUPPI = [1, 7, 4, 11, 8, 9, 5, 6, 3, 10, 12]
 
-def nuxt_state(page):
-    i = page.find("window.__NUXT__=")
-    if i < 0: return None
-    j = page.find("</script>", i)
-    fd, p = tempfile.mkstemp(suffix=".js"); out = p + ".json"
-    with os.fdopen(fd, "w") as f:
-        f.write("var window={};" + page[i:j] + ";require('fs').writeFileSync(%s,JSON.stringify(window.__NUXT__));" % json.dumps(out))
+_OP_FETCH = """async (url) => {
+  const r = await fetch(url, {credentials: 'include', headers: {accept: 'application/json', referer: 'https://oddspedia.com/it/calcio'}});
+  return {status: r.status, mitigated: r.headers.get('cf-mitigated'), text: await r.text()};
+}"""
+_OP_FETCH_MANY = """async (urls) => {
+  const out = new Array(urls.length);
+  await Promise.all(urls.map(async (url, i) => {
+    try {
+      const r = await fetch(url, {credentials: 'include', headers: {accept: 'application/json', referer: 'https://oddspedia.com/it/calcio'}});
+      out[i] = {status: r.status, mitigated: r.headers.get('cf-mitigated'), text: await r.text()};
+    } catch (e) {
+      out[i] = {status: 0, mitigated: null, text: String(e)};
+    }
+  }));
+  return out;
+}"""
+
+class OPClient:
+    """Chrome reale: sugli IP dei runner il challenge Cloudflare blocca anche l'API JSON,
+    e il cookie cf_clearance non viene accettato da curl_cffi."""
+
+    def __init__(self):
+        self._xvfb = None
+        self._pw = None
+        self._browser = None
+        self._page = None
+        try:
+            self._ensure_display()
+            from playwright.sync_api import sync_playwright
+            chrome = shutil.which("google-chrome-stable") or shutil.which("google-chrome")
+            if not chrome:
+                raise RuntimeError("Google Chrome assente: serve per superare il challenge Cloudflare di Oddspedia")
+            self._pw = sync_playwright().start()
+            self._browser = self._pw.chromium.launch(
+                executable_path=chrome, headless=False,
+                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu",
+                      "--disable-blink-features=AutomationControlled", "--window-size=1400,900"])
+            ctx = self._browser.new_context(locale="it-IT", timezone_id="Europe/Rome", viewport={"width": 1400, "height": 900})
+            self._page = ctx.new_page()
+            self._page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            self._pass_challenge()
+        except Exception:
+            self.close()
+            raise
+
+    def _ensure_display(self):
+        if os.environ.get("DISPLAY"):
+            return
+        xvfb = shutil.which("Xvfb")
+        if not xvfb:
+            raise RuntimeError("Xvfb assente: serve un display per superare il challenge Cloudflare di Oddspedia")
+        n = 99
+        while os.path.exists(f"/tmp/.X11-unix/X{n}"):
+            n += 1
+        self._xvfb = subprocess.Popen([xvfb, f":{n}", "-screen", "0", "1400x900x24"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        os.environ["DISPLAY"] = f":{n}"
+        time.sleep(0.4)
+
+    def _probe(self):
+        url = OP + "/api/v1/getLeagueInfo?geoCode=IT&sport=calcio&category=italia&league=serie-a&season=&timezone=Europe%2FRome&language=it"
+        try:
+            res = self._page.evaluate(_OP_FETCH, url)
+        except Exception:
+            return False
+        return res.get("status") == 200 and (res.get("text") or "").lstrip().startswith("{")
+
+    def _pass_challenge(self):
+        page = self._page
+        page.goto(OP + "/it/calcio", wait_until="domcontentloaded", timeout=60000)
+        for _ in range(20):
+            if self._probe():
+                log("[oddspedia] sessione browser pronta")
+                return
+            page.wait_for_timeout(1200)
+            for fr in page.frames:
+                if "challenges.cloudflare.com" in (fr.url or ""):
+                    try:
+                        fr.locator("body").click(timeout=1000, force=True)
+                    except Exception:
+                        pass
+        raise RuntimeError("challenge Cloudflare non superato")
+
+    def _as_json(self, res):
+        status = res.get("status") or 0
+        if status == 200:
+            try:
+                return json.loads(res.get("text") or "")
+            except json.JSONDecodeError:
+                return "risposta non JSON"
+        extra = " Cloudflare challenge" if res.get("mitigated") == "challenge" else ""
+        if not extra and "Just a moment" in (res.get("text") or ""):
+            extra = " Cloudflare challenge"
+        return f"HTTP {status}{extra}" if status else (res.get("text") or "errore")
+
+    def get_json(self, url):
+        last = None
+        for i in range(3):
+            got = self._as_json(self._page.evaluate(_OP_FETCH, url))
+            if not isinstance(got, str):
+                return got
+            last = got
+            if "HTTP 403" in got and i == 0:
+                log("[oddspedia] challenge di nuovo, lo riaffronto")
+                self._pass_challenge()
+                continue
+            if got.startswith("HTTP 4"):
+                break
+            time.sleep(2 + 3 * i)
+        raise RuntimeError(last or "errore")
+
+    def get_json_many(self, urls):
+        def parse(rows):
+            return [self._as_json(r or {}) for r in rows]
+        got = parse(self._page.evaluate(_OP_FETCH_MANY, urls))
+        if any(isinstance(x, str) and "HTTP 403" in x for x in got):
+            log("[oddspedia] challenge di nuovo, lo riaffronto")
+            self._pass_challenge()
+            got = parse(self._page.evaluate(_OP_FETCH_MANY, urls))
+        return got
+
+    def close(self):
+        for fn in (lambda: self._browser and self._browser.close(), lambda: self._pw and self._pw.stop()):
+            try:
+                fn()
+            except Exception:
+                pass
+        self._browser = self._pw = None
+        if self._xvfb:
+            self._xvfb.terminate()
+            self._xvfb = None
+
+def op_qs(params):
+    """Stesso serializer della frontend: null diventa stringa vuota, poi URLSearchParams."""
+    return urlencode([(k, "" if v is None else v) for k, v in params])
+
+def op_api(client, q):
+    endpoint = q.split("?", 1)[0]
     try:
-        subprocess.run(["node", p], check=True, timeout=60, capture_output=True)
-        return json.load(open(out))
-    finally:
-        for x in (p, out):
-            try: os.remove(x)
-            except OSError: pass
+        body = client.get_json(OP + "/api/v1/" + q)
+    except RuntimeError as e:
+        raise RuntimeError(f"{endpoint}: {e}") from e
+    return body.get("data") if isinstance(body, dict) else {}
+
+def op_api_many(client, qs):
+    got = client.get_json_many([OP + "/api/v1/" + q for q in qs])
+    out = []
+    for q, body in zip(qs, got):
+        if isinstance(body, str):
+            out.append(RuntimeError(f"{q.split('?', 1)[0]}: {body}"))
+        else:
+            out.append(body.get("data") if isinstance(body, dict) else {})
+    return out
+
+def op_slug(path):
+    parts = [p for p in path.split("/") if p]
+    if len(parts) < 3:
+        raise RuntimeError(f"percorso lega inatteso: {path}")
+    return parts[-3], parts[-2], parts[-1]
 
 def op_partite_lega(s, nome, path):
-    st = nuxt_state(get(s, OP + path).text) or {}
+    sport, category, league = op_slug(path)
+    info = op_api(s, "getLeagueInfo?" + op_qs([
+        ("geoCode", "IT"), ("sport", sport), ("category", category), ("league", league),
+        ("season", ""), ("timezone", "Europe/Rome"), ("language", "it"),
+    ]))
+    season = info.get("current_season")
+    if not season:
+        raise RuntimeError(f"getLeagueInfo: stagione assente per {league}")
+    # La pagina di lega manda getMatchList con seasonId e l'intervallo del turno corrente.
+    # Qui l'intervallo è la finestra del comparatore (prossimi N giorni): stessi parametri,
+    # così non si dipende dall'HTML e non si perde il lunedì fuori dalla settimana in corso.
+    start = (NOW - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    end = (NOW + timedelta(days=GIORNI_AVANTI)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    base = [
+        ("geoCode", "IT"), ("sport", sport), ("category", category), ("league", league),
+        ("seasonId", season), ("popularLeaguesOnly", 0), ("excludeSpecialStatus", 0),
+        ("status", "all"), ("sortBy", "default"), ("startDate", start), ("endDate", end),
+        ("round", ""), ("page", 1), ("perPage", 150), ("perPageDefault", 150), ("language", "it"),
+    ]
     ms = []
-    for d in st.get("data") or []:
-        if isinstance(d, dict): ms += d.get("matches") or []
+    for page in range(1, 4):
+        q = [(k, page if k == "page" else v) for k, v in base]
+        data = op_api(s, "getMatchList?" + op_qs(q))
+        batch = data.get("matchList") or []
+        ms += batch
+        if page >= (data.get("total_pages") or 1) or not batch:
+            break
+        time.sleep(0.2)
     out = []
     for m in ms:
         dt = parse_dt(m["md"])
@@ -472,10 +642,6 @@ def op_partite_lega(s, nome, path):
         out.append(m)
     out.sort(key=lambda m: m["md"])
     return out[:MAX_PER_LEGA]
-
-def op_api(s, q):
-    r = get(s, OP + "/api/v1/" + q, headers={"accept": "application/json", "referer": OP + "/it/calcio"})
-    return r.json().get("data") or {}
 
 def op_dec(v):
     try:
@@ -488,6 +654,10 @@ def op_partita(s, comp, m):
     home, away = m["ht"], m["at"]
     base = f"getMatchOdds?matchId={m['id']}&geoCode=IT&geoState=&bookmakerGeoCode=IT&bookmakerGeoState=&wettsteuer=0&inplay=0&language=it"
     bk, markets = {}, []
+    payloads = []
+    for i in range(0, len(OP_GRUPPI), 4):
+        gids = OP_GRUPPI[i:i + 4]
+        payloads += list(zip(gids, op_api_many(s, [base + f"&oddGroupId={gid}" for gid in gids])))
     def nomi_sel(names):
         r = []
         for i, n in enumerate(names):
@@ -499,13 +669,10 @@ def op_partita(s, comp, m):
             elif n == "Meno": n = "Under"
             r.append(n)
         return r
-    for gid in OP_GRUPPI:
-        try:
-            d = op_api(s, base + f"&oddGroupId={gid}")
-        except Exception as e:
-            if gid == 1: raise
-            log(f"[oddspedia] gruppo {gid} {home}-{away}: {e}"); continue
-        time.sleep(0.25)
+    for gid, d in payloads:
+        if isinstance(d, Exception):
+            if gid == 1: raise d
+            log(f"[oddspedia] gruppo {gid} {home}-{away}: {d}"); continue
         for mk in d.get("prematch", []):
             if mk.get("id") != gid or not mk.get("periods"): continue
             for per in mk["periods"]:
@@ -553,18 +720,34 @@ def op_partita(s, comp, m):
     }
 
 def scrape_oddspedia():
-    s = session()
-    get(s, OP + "/it/calcio")
+    client = OPClient()
+    try:
+        return _scrape_oddspedia(client)
+    finally:
+        client.close()
+
+def _scrape_oddspedia(s):
     jobs, errori, leghe_ok = [], [], 0
+    blocchi = 0
     for nome, path in OP_LEGHE:
         try:
             ms = op_partite_lega(s, nome, path)
             leghe_ok += 1
+            blocchi = 0
             log(f"[oddspedia] {nome}: {len(ms)} partite")
             jobs += [(nome, m) for m in ms]
         except Exception as e:
             errori.append(f"{nome}: {e}"); log(f"[oddspedia] ERRORE {nome}: {e}")
-        time.sleep(1)
+            if "HTTP 403" in str(e):
+                blocchi += 1
+                # Un challenge sull'API non dipende dalla lega: inutile insistere su tutte.
+                if blocchi >= 3 and leghe_ok == 0:
+                    errori.append("interrotto: l'API Oddspedia risponde 403")
+                    log("[oddspedia] stop: tre 403 consecutivi, l'API è bloccata da questo IP")
+                    break
+            else:
+                blocchi = 0
+        time.sleep(0.3)
     # Distribuzione equa: prima il primo incontro di ogni campionato,
     # poi il secondo e così via. In questo modo il limite globale non privilegia
     # soltanto le competizioni elencate per prime.
@@ -583,14 +766,14 @@ def scrape_oddspedia():
         jobs_equilibrati = jobs_equilibrati[:MAX_PARTITE_ODDSPEDIA]
     jobs = jobs_equilibrati
     partite = []
-    def run(job):
+    for i, job in enumerate(jobs, 1):
         try:
-            return op_partita(s, *job)
+            r = op_partita(s, *job)
         except Exception as e:
             errori.append(f"{job[1]['ht']}-{job[1]['at']}: {e}"); log(f"[oddspedia] ERRORE {job[1]['ht']}-{job[1]['at']}: {e}")
-    with ThreadPoolExecutor(2) as ex:
-        for r in ex.map(run, jobs):
-            if r and r["mercati"]: partite.append(r)
+            r = None
+        if r and r["mercati"]: partite.append(r)
+        if i % 40 == 0: log(f"[oddspedia] quote {i}/{len(jobs)}")
     return partite, errori, {"leghe_ok": leghe_ok, "leghe": len(OP_LEGHE), "finestra_giorni": GIORNI_AVANTI}
 
 # --------------------------------------------------------------------------------------
@@ -683,6 +866,9 @@ def main():
                 log(f"[{fonte}] quote per lo storico non estratte: {e}")
         riepilogo["fonti"][fonte] = {k: stato.get(k) for k in ("nome", "ok", "vecchi", "vuoto", "n_partite", "n_errori", "aggiornato_ok", "durata_s", "finestra_giorni")}
         log(f"== {fonte}: ok={stato.get('ok')} partite={len(partite)} errori={len(errori)} in {stato['durata_s']}s")
+        if fonte == "oddspedia" and not stato.get("ok") and os.environ.get("GITHUB_ACTIONS") == "true":
+            primo = errori[0] if errori else ""
+            print(f"::warning title=Oddspedia non aggiornata::partite={len(partite)} errori={len(errori)} {primo}", flush=True)
     try:
         mov, st = pubblica_movimenti(a.out, quote_nuove)
         log(f"[storico] snapshot={mov.get('n_snap')} ore={mov.get('ore')} quote={len(st.get('q') or {})}")
